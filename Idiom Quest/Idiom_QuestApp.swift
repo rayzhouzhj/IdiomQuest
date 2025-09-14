@@ -8,13 +8,31 @@
 import SwiftUI
 
 @main
-struct Idiom_QuestApp: App {
-    let persistenceController = PersistenceController.shared
-
+struct IdiomQuestApp: App {
+    let coreDataManager = CoreDataManager.shared
+    
+    init() {
+        coreDataManager.initializeUserData()
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            TabView {
+                LearningView()
+                    .tabItem {
+                        Label("Learning", systemImage: "book.closed")
+                    }
+                
+                GameView()
+                    .tabItem {
+                        Label("Game", systemImage: "gamecontroller")
+                    }
+                
+                ReviewView()
+                    .tabItem {
+                        Label("Review", systemImage: "checkmark.circle")
+                    }
+            }
         }
     }
 }
