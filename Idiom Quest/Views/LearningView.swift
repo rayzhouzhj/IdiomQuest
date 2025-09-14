@@ -19,7 +19,7 @@ struct LearningView: View {
             VStack(spacing: 20) {
                 if let idiom = dailyIdiom {
                     VStack(spacing: 10) {
-                        Text(idiom.value(forKey: "word") as? String ?? "No Word")
+                        Text((idiom.value(forKey: "word") as? String ?? "No Word").toPreferredChinese())
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .multilineTextAlignment(.center)
@@ -28,19 +28,19 @@ struct LearningView: View {
                             .font(.headline)
                             .foregroundColor(.gray)
                         
-                        Text(idiom.value(forKey: "explanation") as? String ?? "No Explanation")
+                        Text((idiom.value(forKey: "explanation") as? String ?? "No Explanation").toPreferredChinese())
                             .font(.body)
                             .multilineTextAlignment(.center)
                         
                         if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
-                            Text("Example: \(example)")
+                            Text("Example: \(example.toPreferredChinese())")
                                 .font(.subheadline)
                                 .italic()
                                 .foregroundColor(.blue)
                         }
                         
                         if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
-                            Text("Derivation: \(derivation)")
+                            Text("Derivation: \(derivation.toPreferredChinese())")
                                 .font(.subheadline)
                                 .foregroundColor(.green)
                         }

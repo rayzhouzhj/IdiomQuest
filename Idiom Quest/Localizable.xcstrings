@@ -1,0 +1,64 @@
+{
+  "sourceLanguage" : "zh-Hant",
+  "strings" : {
+    "Balloon Game" : {
+
+    },
+    "Daily Idiom" : {
+
+    },
+    "Derivation: %@" : {
+
+    },
+    "Example: %@" : {
+
+    },
+    "Final Score: %lld\nHigh Score: %lld" : {
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Final Score: %1$lld\nHigh Score: %2$lld"
+          }
+        }
+      }
+    },
+    "Game" : {
+
+    },
+    "Game Over" : {
+
+    },
+    "Learned Idioms" : {
+
+    },
+    "Learning" : {
+
+    },
+    "Loading daily idiom..." : {
+
+    },
+    "Play Again" : {
+
+    },
+    "Review" : {
+
+    },
+    "Review Learned" : {
+
+    },
+    "Score: %lld" : {
+
+    },
+    "Start Game" : {
+
+    },
+    "Stop Game" : {
+
+    },
+    "Time: %lld" : {
+
+    }
+  },
+  "version" : "1.0"
+}
