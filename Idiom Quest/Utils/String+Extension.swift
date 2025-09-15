@@ -24,7 +24,7 @@ extension String {
     func toPreferredChinese() -> String {
         let preferredLanguage = Locale.preferredLanguages.first ?? "zh-Hans"
         
-        let traditionalLocales = ["zh-Hant", "zh-TW", "zh-HK", "zh-MO"]
+        let traditionalLocales = ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "yue-Hant-HK", "yue-Hant-MO"]
         if traditionalLocales.contains(where: preferredLanguage.contains) {
             return self.toTraditionalChinese()
         }
