@@ -4,15 +4,6 @@
     "Balloon Game" : {
 
     },
-    "Daily Idiom" : {
-
-    },
-    "Derivation: %@" : {
-
-    },
-    "Example: %@" : {
-
-    },
     "Final Score: %lld\nHigh Score: %lld" : {
       "localizations" : {
         "zh-Hant" : {
@@ -35,16 +26,27 @@
     "Learning" : {
 
     },
-    "Loading daily idiom..." : {
-
+    "loading_daily_idiom" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加載"
+          }
+        }
+      }
     },
     "Play Again" : {
 
     },
     "Review" : {
-
-    },
-    "Review Learned" : {
 
     },
     "Score: %lld" : {

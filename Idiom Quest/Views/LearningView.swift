@@ -33,14 +33,14 @@ struct LearningView: View {
                             .multilineTextAlignment(.center)
                         
                         if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
-                            Text("Example: \(example.toPreferredChinese())")
+                            Text("例子: \(example)".toPreferredChinese())
                                 .font(.subheadline)
                                 .italic()
                                 .foregroundColor(.blue)
                         }
                         
                         if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
-                            Text("Derivation: \(derivation.toPreferredChinese())")
+                            Text("來源: \(derivation)".toPreferredChinese())
                                 .font(.subheadline)
                                 .foregroundColor(.green)
                         }
@@ -54,10 +54,10 @@ struct LearningView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 } else {
-                    Text("Loading daily idiom...")
+                    Text(LocalizationKeys.Learning.loadingDailyIdiom)
                 }
                 
-                Button("Review Learned") {
+                Button("查看已學習成語".toPreferredChinese()) {
                     showReview = true
                 }
                 .padding()
@@ -65,7 +65,7 @@ struct LearningView: View {
                 .foregroundColor(.white)
                 .cornerRadius(8)
             }
-            .navigationTitle("Daily Idiom")
+            .navigationTitle("每日一詞".toPreferredChinese())
             .onAppear(perform: loadDailyIdiom)
             .sheet(isPresented: $showReview) {
                 ReviewView()
@@ -78,13 +78,17 @@ struct LearningView: View {
         let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
         request.fetchLimit = 1
         
-        // Daily offset
-        let totalCount = UserDefaults.standard.integer(forKey: "totalChengyuCount") // Set this once after loading
-        let dayOffset = Calendar.current.component(.day, from: Date()) % totalCount
-        request.fetchOffset = dayOffset
-        
         do {
-            dailyIdiom = try context.fetch(request).first
+            let totalCount = try context.count(for: request)
+            if totalCount > 0 {
+                // Use consistent day-based offset (your original approach, fixed)
+                let dayOffset = Calendar.current.component(.day, from: Date()) % totalCount
+                request.fetchOffset = dayOffset
+                
+                dailyIdiom = try context.fetch(request).first
+            }
+            
+            // Update learned status
             if let word = dailyIdiom?.value(forKey: "word") as? String {
                 isLearned = getLearnedStatus(for: word)
             }
@@ -92,7 +96,21 @@ struct LearningView: View {
             print("Failed to load daily idiom: \(error)")
         }
     }
-    
+
+    private func getLearnedWords() -> [String] {
+        let context = CoreDataManager.shared.context
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        userDataRequest.predicate = NSPredicate(format: "isLearned == %@", NSNumber(value: true))
+        
+        do {
+            let results = try context.fetch(userDataRequest)
+            return results.compactMap { $0.value(forKey: "word") as? String }
+        } catch {
+            print("Failed to get learned words: \(error)")
+            return []
+        }
+    }
+
     private func toggleLearned() {
         guard let word = dailyIdiom?.value(forKey: "word") as? String else { return }
         
