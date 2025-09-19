@@ -75,7 +75,7 @@ struct GameView: View {
     
     let balloonColors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan]
     let balloonsPerRound = 4
-    let roundDuration: TimeInterval = 8.0
+    let roundDuration: TimeInterval = 15.0
     
     var body: some View {
         GeometryReader { geometry in
