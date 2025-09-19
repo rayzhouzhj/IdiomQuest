@@ -13,6 +13,7 @@ struct LearningView: View {
     @State private var dailyIdiom: NSManagedObject?
     @State private var isLearned: Bool = false
     @State private var showReview = false
+    @State private var showSearch = false
     @State private var reviewWords: [NSManagedObject] = []
     @State private var animateCard = false
     @State private var showConfetti = false
@@ -55,6 +56,9 @@ struct LearningView: View {
             .sheet(isPresented: $showReview) {
                 ReviewView()
             }
+            .sheet(isPresented: $showSearch) {
+                SearchView()
+            }
         }
     }
     
@@ -78,19 +82,10 @@ struct LearningView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    loadDailyIdiom()
-                    withAnimation(.spring()) {
-                        animateCard = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            animateCard = true
-                        }
-                    }
-                }) {
-                    Image(systemName: "arrow.clockwise")
+                Button(action: { showSearch = true }) {
+                    Image(systemName: "magnifyingglass")
                         .font(.title2)
                         .foregroundColor(.blue)
-                        .rotationEffect(.degrees(animateCard ? 360 : 0))
                 }
             }
             

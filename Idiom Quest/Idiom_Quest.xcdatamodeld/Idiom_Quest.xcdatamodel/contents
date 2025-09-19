@@ -8,6 +8,11 @@
         <attribute name="pinyin" attributeType="String"/>
         <attribute name="word" attributeType="String"/>
     </entity>
+    <entity name="SearchHistory" representedClassName="SearchHistory" syncable="YES" codeGenerationType="class">
+        <attribute name="searchDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="searchQuery" attributeType="String"/>
+        <attribute name="word" attributeType="String"/>
+    </entity>
     <entity name="UserData" representedClassName="UserData" syncable="YES" codeGenerationType="class">
         <attribute name="isLearned" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
         <attribute name="lastReviewDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
