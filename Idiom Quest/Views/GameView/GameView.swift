@@ -984,7 +984,10 @@ struct GameView: View {
             let isHigh = i % 2 == 1  // Odd indices (1, 3) are high
             
             let xPos = screenWidth * (0.15 + CGFloat(i) * 0.18) + CGFloat.random(in: -15...15)
-            let baseY = isHigh ? screenHeight * 0.12 : screenHeight * 0.35  // High vs low positions
+            // Adjusted Y positions to avoid gameHUD overlap
+            // High balloons: 20% from top (below HUD + spacing)
+            // Low balloons: 45% from top (well below HUD)
+            let baseY = isHigh ? screenHeight * 0.20 : screenHeight * 0.45
             
             let randomPhase = Double.random(in: 0...(.pi * 2))
             let randomSize = CGSize(width: CGFloat.random(in: 60...75), height: CGFloat.random(in: 95...115))
