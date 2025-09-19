@@ -54,11 +54,12 @@ struct GameView: View {
     @State private var animateNewRound = false
     @State private var showWrongAnswerEffect = false
     @State private var wrongAnswerShake = false
-    @State private var showCoinEffect = false
-    @State private var coinPosition: CGPoint = .zero
-    @State private var coinSpin: Double = 0
-    @State private var coinScale: CGFloat = 1.0
-    @State private var coinOpacity: Double = 0.0
+    @State private var showBalloonEffect = false
+    @State private var balloonStartPosition: CGPoint = .zero
+    @State private var balloonEndPosition: CGPoint = .zero
+    @State private var balloonFlyProgress: CGFloat = 0.0
+    @State private var balloonScale: CGFloat = 1.0
+    @State private var balloonOpacity: Double = 0.0
     @State private var isPaused = false
     
     let balloonColors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan]
@@ -166,38 +167,6 @@ struct GameView: View {
             Spacer()
             
             VStack(spacing: 15) {
-                HStack(spacing: 20) {
-                    VStack {
-                        Text("⏱️")
-                            .font(.title)
-                        LocalizedText("60秒")
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                    }
-                    
-                    VStack {
-                        Text("🪙")
-                            .font(.title)
-                        LocalizedText("答對+10金幣")
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                    }
-                    
-                    VStack {
-                        Text("🎈")
-                            .font(.title)
-                        LocalizedText("4個選項")
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                    }
-                }
-                .padding(20)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(.white.opacity(0.2))
-                        .blur(radius: 1)
-                )
-                
                 Button(action: startGame) {
                     HStack {
                         Image(systemName: "play.fill")
@@ -224,24 +193,6 @@ struct GameView: View {
             }
             
             Spacer()
-            
-            Button(action: { 
-                appState.isGameInProgress = false // Disable pause system
-                appState.shouldPauseGame = false
-                dismiss() 
-            }) {
-                HStack {
-                    Image(systemName: "xmark")
-                    LocalizedText("返回")
-                }
-                .foregroundColor(.white)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(.black.opacity(0.3))
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
         }
         .padding()
         .onAppear {
@@ -290,6 +241,36 @@ struct GameView: View {
                 
                 // Bottom explanation area
                 explanationArea
+                
+                // Quit Game Button
+                Button(action: {
+                    appState.isGameInProgress = false
+                    appState.shouldPauseGame = false
+                    gameState = .waiting
+                    cleanupTimers()
+                    balloons.removeAll()
+                    nextRoundBalloons.removeAll()
+                    showTransition = false
+                    isPaused = false
+                }) {
+                    HStack {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                        LocalizedText("退出遊戲")
+                            .font(.headline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.red.opacity(0.8))
+                            .shadow(color: .black.opacity(0.3), radius: 3)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.bottom, 10)
             }
             
             // Confetti
@@ -302,58 +283,43 @@ struct GameView: View {
                     }
             }
             
-            // Mario Coin Effect
-            if showCoinEffect {
-                VStack(spacing: 8) {
-                    // Spinning coin
-                    Text("🪙")
-                        .font(.system(size: 40))
-                        .rotationEffect(.degrees(coinSpin))
-                        .scaleEffect(coinScale)
-                        .opacity(coinOpacity)
-                        .animation(.easeInOut(duration: 0.6), value: coinSpin)
-                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: coinScale)
-                    
-                    // +10 Coins text
-                    HStack(spacing: 4) {
-                        Text("+10")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.yellow)
-                        Text("🪙")
-                            .font(.title3)
+            // Flying Balloon Effect
+            if showBalloonEffect {
+                let currentPosition = CGPoint(
+                    x: balloonStartPosition.x + (balloonEndPosition.x - balloonStartPosition.x) * balloonFlyProgress,
+                    y: balloonStartPosition.y + (balloonEndPosition.y - balloonStartPosition.y) * balloonFlyProgress
+                )
+                
+                Text("🎈")
+                    .font(.system(size: 30))
+                    .scaleEffect(balloonScale)
+                    .opacity(balloonOpacity)
+                    .position(currentPosition)
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            balloonOpacity = 1.0
+                            balloonScale = 1.2
+                        }
+                        
+                        withAnimation(.easeOut(duration: 0.8)) {
+                            balloonFlyProgress = 1.0
+                        }
+                        
+                        withAnimation(.easeInOut(duration: 0.3).delay(0.5)) {
+                            balloonScale = 0.8
+                        }
+                        
+                        withAnimation(.easeOut(duration: 0.2).delay(0.8)) {
+                            balloonOpacity = 0.0
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            showBalloonEffect = false
+                            balloonFlyProgress = 0.0
+                            balloonScale = 1.0
+                            balloonOpacity = 0.0
+                        }
                     }
-                    .shadow(color: .black.opacity(0.5), radius: 2)
-                    .scaleEffect(coinScale)
-                    .opacity(coinOpacity)
-                }
-                .position(coinPosition)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        coinOpacity = 1.0
-                        coinScale = 1.3
-                    }
-                    
-                    withAnimation(.linear(duration: 0.6)) {
-                        coinSpin = 720 // Two full rotations
-                    }
-                    
-                    withAnimation(.easeInOut(duration: 0.4).delay(0.2)) {
-                        coinScale = 0.8
-                    }
-                    
-                    withAnimation(.easeOut(duration: 0.3).delay(0.6)) {
-                        coinOpacity = 0.0
-                        coinScale = 1.5
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        showCoinEffect = false
-                        coinSpin = 0
-                        coinScale = 1.0
-                        coinOpacity = 0.0
-                    }
-                }
             }
             
             // Wrong Answer Effect
@@ -462,9 +428,9 @@ struct GameView: View {
             
             VStack(alignment: .trailing, spacing: 5) {
                 HStack {
-                    Text("🪙")
+                    Text("🎈")
                         .font(.title2)
-                    LocalizedText("\(score)")
+                    LocalizedText("\(correctAnswers)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
@@ -551,14 +517,14 @@ struct GameView: View {
             VStack(spacing: 15) {
                 HStack {
                     VStack {
-                        LocalizedText("最終金幣")
+                        LocalizedText("收集氣球")
                             .font(.headline)
                             .foregroundColor(.white)
                         HStack {
-                            Text("\(score)")
+                            Text("\(correctAnswers)")
                                 .font(.system(size: 40, weight: .bold))
                                 .foregroundColor(.yellow)
-                            Text("🪙")
+                            Text("🎈")
                                 .font(.system(size: 30))
                         }
                     }
@@ -852,9 +818,11 @@ struct GameView: View {
                 correctAnswers += 1
                 showConfetti = true
                 
-                // Trigger coin effect at balloon position
-                coinPosition = CGPoint(x: balloons[index].xPosition, y: balloons[index].yOffset)
-                showCoinEffect = true
+                // Trigger balloon flying effect
+                balloonStartPosition = CGPoint(x: balloons[index].xPosition, y: balloons[index].yOffset)
+                // Calculate HUD balloon position (approximate)
+                balloonEndPosition = CGPoint(x: screenWidth - 80, y: 80) 
+                showBalloonEffect = true
                 
                 // Haptic feedback
                 let generator = UINotificationFeedbackGenerator()
