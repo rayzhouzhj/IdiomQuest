@@ -25,4 +25,5 @@ struct Balloon: Identifiable {
     var baseYOffset: CGFloat
     let size: CGSize
     var isTapped = false
+    var isExploding = false
 }

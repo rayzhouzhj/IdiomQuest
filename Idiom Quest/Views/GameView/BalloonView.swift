@@ -18,6 +18,18 @@ struct BalloonView: View {
     @State private var rotation: Angle = .degrees(0)
     @State private var animationOffset: CGFloat = 0  // Simplified animation state
     @State private var tiltAngle: Double = 0
+    @State private var showExplosion: Bool = false
+    @State private var explosionParticles: [ExplosionParticle] = []
+    @State private var showPopText: Bool = false
+    
+    // Explosion Particle for BalloonView
+    private struct ExplosionParticle: Identifiable {
+        let id = UUID()
+        let color: Color
+        let startPosition: CGPoint
+        let velocity: CGPoint
+        let size: CGFloat
+    }
 
     var body: some View {
         ZStack {
@@ -91,9 +103,55 @@ struct BalloonView: View {
                 .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 110)
                 .opacity(opacity)
                 .scaleEffect(scale)
+            
+            // Balloon rubber fragments
+            ForEach(explosionParticles) { particle in
+                // Create irregular balloon fragment shapes
+                ZStack {
+                    // Main fragment piece
+                    Ellipse()
+                        .fill(particle.color)
+                        .frame(width: particle.size, height: particle.size * 0.6)
+                        .rotationEffect(.degrees(Double.random(in: 0...360)))
+                    
+                    // Smaller attached piece for irregular shape
+                    if particle.size > 4 { // Only for larger fragments
+                        Circle()
+                            .fill(particle.color.opacity(0.8))
+                            .frame(width: particle.size * 0.4, height: particle.size * 0.4)
+                            .offset(x: particle.size * 0.3, y: particle.size * 0.2)
+                    }
+                }
+                .position(particle.startPosition)
+                .opacity(showExplosion ? 0 : 1)
+                .offset(
+                    x: showExplosion ? particle.velocity.x * 100 : 0,
+                    y: showExplosion ? particle.velocity.y * 100 + (showExplosion ? 30 : 0) : 0 // Add gravity effect
+                )
+                .rotationEffect(.degrees(showExplosion ? Double.random(in: 180...720) : 0)) // Tumbling motion
+                .scaleEffect(showExplosion ? 0.2 : 1.0)
+                .animation(.easeOut(duration: 0.6).delay(Double.random(in: 0...0.1)), value: showExplosion)
+            }
+            
+            // "POP!" text effect
+            if showPopText {
+                Text("POP!")
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .foregroundColor(.red)
+                    .shadow(color: .black.opacity(0.5), radius: 2)
+                    .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset)
+                    .scaleEffect(showPopText ? 1.5 : 0.1)
+                    .opacity(showPopText ? 0 : 1)
+                    .animation(.easeOut(duration: 0.3), value: showPopText)
+            }
         }
         .onTapGesture {
             handleTap()
+        }
+        .onChange(of: balloon.isExploding) { isExploding in
+            if isExploding && !showExplosion {
+                triggerExplosion()
+            }
         }
     }
     
@@ -110,13 +168,76 @@ struct BalloonView: View {
                 opacity = 0
             }
         } else {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                scale = 0.8
-            }
-            withAnimation(.easeInOut(duration: 0.15).delay(0.1)) {
-                scale = 1.0
-            }
+            // For wrong answers, trigger explosion immediately
+            triggerExplosion()
         }
+    }
+    
+    private func triggerExplosion() {
+        // Create realistic balloon pop fragments
+        let balloonCenter = CGPoint(
+            x: balloon.xPosition + balloon.xOffset,
+            y: balloon.yOffset
+        )
+        
+        explosionParticles = []
+        
+        // Create 8-10 balloon rubber fragments (like real balloon pieces)
+        for i in 0..<Int.random(in: 8...10) {
+            let angle = Double(i) * (.pi * 2 / 8) + Double.random(in: -0.3...0.3) // Some randomness
+            let velocity = CGPoint(
+                x: cos(angle) * Double.random(in: 1.5...3.0), // Very fast initial burst
+                y: sin(angle) * Double.random(in: 1.5...3.0)
+            )
+            
+            let particle = ExplosionParticle(
+                color: balloon.color.opacity(0.9), // Use actual balloon color, slightly transparent
+                startPosition: balloonCenter,
+                velocity: velocity,
+                size: CGFloat.random(in: 6...12) // Various fragment sizes
+            )
+            
+            explosionParticles.append(particle)
+        }
+        
+        // Add some smaller debris
+        for i in 0..<5 {
+            let angle = Double.random(in: 0...(2 * .pi))
+            let velocity = CGPoint(
+                x: cos(angle) * Double.random(in: 0.8...1.5),
+                y: sin(angle) * Double.random(in: 0.8...1.5)
+            )
+            
+            let particle = ExplosionParticle(
+                color: balloon.color.opacity(0.6),
+                startPosition: balloonCenter,
+                velocity: velocity,
+                size: CGFloat.random(in: 2...4) // Tiny pieces
+            )
+            
+            explosionParticles.append(particle)
+        }
+        
+        // Instant balloon pop animation - like a real balloon bursting
+        withAnimation(.linear(duration: 0.02)) {
+            scale = 1.3 // Quick expand
+        }
+        
+        withAnimation(.linear(duration: 0.02).delay(0.02)) {
+            scale = 0.0 // Instant disappear - POP!
+            opacity = 0
+            showExplosion = true
+            showPopText = true
+        }
+        
+        // Hide POP text after brief moment
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            showPopText = false
+        }
+        
+        // Haptic feedback to simulate "POP"
+        let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
+        impactGenerator.impactOccurred()
     }
 }
 

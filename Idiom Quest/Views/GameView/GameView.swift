@@ -550,43 +550,26 @@ struct GameView: View {
                     }
             }
             
-            // Wrong Answer Effect
+            // Wrong Answer Effect - Subtle and elegant
             if showWrongAnswerEffect {
                 ZStack {
-                    // Red flash overlay
+                    // Gentle red tint overlay
                     Rectangle()
-                        .fill(.red.opacity(0.3))
+                        .fill(.red.opacity(0.25))
                         .ignoresSafeArea()
-                        .animation(.easeInOut(duration: 0.2), value: showWrongAnswerEffect)
+                        .animation(.easeInOut(duration: 0.3), value: showWrongAnswerEffect)
                     
-                    // Wrong answer feedback
-                    VStack {
-                        Spacer()
-                        
-                        HStack {
-                            Spacer()
-                            
-                            VStack(spacing: 10) {
-                                Text("❌")
-                                    .font(.system(size: 50))
-                                    .scaleEffect(wrongAnswerShake ? 1.2 : 1.0)
-                                
-                                LocalizedText("答錯了！")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .shadow(color: .red, radius: 3)
-                            }
-                            .offset(x: wrongAnswerShake ? -10 : 0)
-                            .animation(.easeInOut(duration: 0.1).repeatCount(3, autoreverses: true), value: wrongAnswerShake)
-                            
-                            Spacer()
-                        }
-                        
-                        Spacer()
-                    }
+                    // Subtle screen shake effect
+                    Rectangle()
+                        .fill(.clear)
+                        .ignoresSafeArea()
+                        .offset(x: wrongAnswerShake ? CGFloat.random(in: -3...3) : 0)
+                        .animation(.easeInOut(duration: 0.1).repeatCount(3, autoreverses: true), value: wrongAnswerShake)
                 }
                 .onAppear {
+                    // Trigger balloon pop effects
+                    popAllBalloons()
+                    
                     withAnimation {
                         wrongAnswerShake = true
                     }
@@ -1131,8 +1114,20 @@ struct GameView: View {
     
     private func endRoundDueToTimeout() {
         roundActive = false
+        
+        // Show warning effect for timeout
+        showWrongAnswerEffect = true
+        
+        // Haptic feedback for timeout
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        
         cleanupRoundTimers()
-        flyAwayAllBalloons()
+        
+        // Delay fly-away animation to show explosion effect
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            self.flyAwayAllBalloons()
+        }
     }
     
     private func cleanupRoundTimers() {
@@ -1186,5 +1181,27 @@ struct GameView: View {
         
         // Resume bobbing animation
         startBobbingAnimation()
+    }
+    
+    // MARK: - Balloon Pop Effect
+    private func popAllBalloons() {
+        // Trigger explosion for each balloon with staggered timing
+        for (index, balloon) in balloons.enumerated() {
+            if !balloon.isTapped {
+                let delay = Double(index) * 0.15 // Stagger explosions
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        self.balloons[index].isExploding = true
+                        self.balloons[index].isTapped = true
+                    }
+                }
+            }
+        }
+    }
+    
+    // Legacy function - keeping for compatibility
+    private func explodeAllBalloons() {
+        popAllBalloons()
     }
 }
