@@ -38,12 +38,31 @@ struct GameView: View {
     @State private var correctAnswers = 0
     @State private var totalRounds = 0
     
+    // Game Duration Options
+    @State private var selectedDuration = 60  // Default 1 minute
+    let durationOptions = [
+        (60, "1 分鐘"),
+        (180, "3 分鐘"), 
+        (300, "5 分鐘")
+    ]
+    
+    // Computed property for formatted time display
+    private var formattedTimeRemaining: String {
+        let minutes = gameTimeRemaining / 60
+        let seconds = gameTimeRemaining % 60
+        if gameTimeRemaining >= 60 {
+            return String(format: "%d:%02d", minutes, seconds)
+        } else {
+            return "\(gameTimeRemaining)秒"
+        }
+    }
+    
     // Timers
     @State private var gameTimer: Timer?
     @State private var roundTimer: Timer?
     @State private var bobbingTimer: Timer?
     @State private var flyAwayTimer: Timer?
-    @State private var gameTimeRemaining = 60  // 1 minute game
+    @State private var gameTimeRemaining = 60  // Will be set based on selectedDuration
     @State private var roundTimeRemaining = 8   // 8 seconds per round
     
     // UI State
@@ -301,7 +320,7 @@ struct GameView: View {
                     )
                     .shadow(color: .black.opacity(0.3), radius: 2)
                 
-                LocalizedText("在60秒內答對最多成語！")
+                LocalizedText("在\(selectedDuration/60)分鐘內答對最多成語！")
                     .font(.headline)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -310,7 +329,45 @@ struct GameView: View {
             
             Spacer()
             
-            VStack(spacing: 15) {
+            VStack(spacing: 20) {
+                // Duration Selection
+                VStack(spacing: 10) {
+                    LocalizedText("選擇遊戲時間")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.3), radius: 1)
+                    
+                    HStack(spacing: 15) {
+                        ForEach(durationOptions, id: \.0) { duration, label in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedDuration = duration
+                                }
+                            }) {
+                                Text(label)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(selectedDuration == duration ? .black : .white)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(selectedDuration == duration ? 
+                                                  LinearGradient(gradient: Gradient(colors: [.yellow, .orange]), 
+                                                               startPoint: .leading, endPoint: .trailing) :
+                                                  LinearGradient(gradient: Gradient(colors: [.clear, .clear]), 
+                                                               startPoint: .leading, endPoint: .trailing))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .stroke(Color.white.opacity(0.6), lineWidth: 1)
+                                            )
+                                    )
+                                    .scaleEffect(selectedDuration == duration ? 1.1 : 1.0)
+                            }
+                        }
+                    }
+                }
+                
                 Button(action: startGame) {
                     HStack {
                         Image(systemName: "play.fill")
@@ -584,7 +641,7 @@ struct GameView: View {
                 HStack {
                     Image(systemName: "clock.fill")
                         .foregroundColor(.orange)
-                    LocalizedText("\(gameTimeRemaining)秒")
+                    LocalizedText(formattedTimeRemaining)
                         .font(.subheadline)
                         .foregroundColor(gameTimeRemaining <= 10 ? .red : .white)
                         .fontWeight(.medium)
@@ -756,7 +813,7 @@ struct GameView: View {
         currentRound = 1
         correctAnswers = 0
         totalRounds = 0
-        gameTimeRemaining = 60
+        gameTimeRemaining = selectedDuration  // Use selected duration
         
         // Start main game timer
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
