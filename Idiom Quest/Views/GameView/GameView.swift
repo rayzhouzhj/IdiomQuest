@@ -790,24 +790,6 @@ struct GameView: View {
                     .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
                 }
                 .buttonStyle(PlainButtonStyle())
-                
-                Button(action: { 
-                    appState.isGameInProgress = false // Disable pause system
-                    appState.shouldPauseGame = false
-                    dismiss() 
-                }) {
-                    HStack {
-                        Image(systemName: "house.fill")
-                        LocalizedText("返回主頁")
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(.black.opacity(0.3))
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding()
