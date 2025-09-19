@@ -8,13 +8,6 @@
 import SwiftUI
 import CoreData
 
-// MARK: - Game States
-enum GameState {
-    case waiting
-    case playing
-    case gameOver
-}
-
 // MARK: - Game View
 struct GameView: View {
     @Environment(\.managedObjectContext) private var context
@@ -24,13 +17,9 @@ struct GameView: View {
     // Game State
     @State private var gameState: GameState = .waiting
     @State private var balloons: [Balloon] = []
-    @State private var nextRoundBalloons: [Balloon] = []
     @State private var currentIdioms: [NSManagedObject] = []
-    @State private var nextRoundIdioms: [NSManagedObject] = []
     @State private var correctIdiom: NSManagedObject?
-    @State private var nextCorrectIdiom: NSManagedObject?
     @State private var showConfetti = false
-    @State private var showTransition = false
     
     // Scoring & Progress
     @State private var score = 0
@@ -292,174 +281,6 @@ struct GameView: View {
         .blur(radius: size.overallBlur)
     }
     
-    // MARK: - Cloud Size Configuration
-    enum CloudSize {
-        case large, medium
-        
-        var mainSize: CGFloat {
-            switch self {
-            case .large: return 90  // Increased from 80
-            case .medium: return 60
-            }
-        }
-        
-        var puffSize: CGFloat {
-            switch self {
-            case .large: return 75  // Increased from 65
-            case .medium: return 45
-            }
-        }
-        
-        var topSize: CGFloat {
-            switch self {
-            case .large: return 65  // Increased from 55
-            case .medium: return 40
-            }
-        }
-        
-        var smallSize: CGFloat {
-            switch self {
-            case .large: return 30  // Increased from 25
-            case .medium: return 20
-            }
-        }
-        
-        // Enhanced sizes for better large cloud details
-        var mediumSize: CGFloat {
-            switch self {
-            case .large: return 42  // Increased from 35
-            case .medium: return 28
-            }
-        }
-        
-        var bottomSize: CGFloat {
-            switch self {
-            case .large: return 38  // Increased from 30
-            case .medium: return 22
-            }
-        }
-        
-        var wispSize: CGFloat {
-            switch self {
-            case .large: return 15  // Increased from 12
-            case .medium: return 8
-            }
-        }
-        
-        var wispRange: CGFloat {
-            switch self {
-            case .large: return 55  // Increased from 45
-            case .medium: return 35
-            }
-        }
-        
-        var wispCount: Int {
-            switch self {
-            case .large: return 10  // Increased from 6
-            case .medium: return 6
-            }
-        }
-        
-        // Blur properties for better scaling
-        var mainBlur: Double {
-            switch self {
-            case .large: return 2.5
-            case .medium: return 2.0
-            }
-        }
-        
-        var puffBlur: Double {
-            switch self {
-            case .large: return 2.0
-            case .medium: return 1.5
-            }
-        }
-        
-        var topBlur: Double {
-            switch self {
-            case .large: return 1.8
-            case .medium: return 1.2
-            }
-        }
-        
-        var mediumBlur: Double {
-            switch self {
-            case .large: return 1.5
-            case .medium: return 1.0
-            }
-        }
-        
-        var bottomBlur: Double {
-            switch self {
-            case .large: return 2.2
-            case .medium: return 1.8
-            }
-        }
-        
-        var smallBlur: Double {
-            switch self {
-            case .large: return 1.3
-            case .medium: return 1.0
-            }
-        }
-        
-        var wispBlurMin: Double {
-            switch self {
-            case .large: return 0.8
-            case .medium: return 0.5
-            }
-        }
-        
-        var wispBlurMax: Double {
-            switch self {
-            case .large: return 2.5
-            case .medium: return 1.5
-            }
-        }
-        
-        var overallBlur: Double {
-            switch self {
-            case .large: return 0.8
-            case .medium: return 0.5
-            }
-        }
-        
-        var offset: CGFloat {
-            switch self {
-            case .large: return 40  // Increased from 35
-            case .medium: return 25
-            }
-        }
-        
-        var verticalOffset: CGFloat {
-            switch self {
-            case .large: return 10  // Increased from 8
-            case .medium: return 6
-            }
-        }
-        
-        var topOffset: CGFloat {
-            switch self {
-            case .large: return 30  // Increased from 25
-            case .medium: return 18
-            }
-        }
-        
-        var smallOffset: CGFloat {
-            switch self {
-            case .large: return 60  // Increased from 50
-            case .medium: return 35
-            }
-        }
-        
-        var smallVertical: CGFloat {
-            switch self {
-            case .large: return 18  // Increased from 15
-            case .medium: return 12
-            }
-        }
-    }
-    
     private var floatingParticles: some View {
         ForEach(0..<6) { i in
             Circle()
@@ -582,7 +403,7 @@ struct GameView: View {
     // MARK: - Game Play View
     private func gamePlayView(geometry: GeometryProxy) -> some View {
         ZStack {
-            // Current balloons layer
+            // Current balloons layer with fade-in animation
             ForEach(balloons) { balloon in
                 BalloonView(
                     balloon: balloon,
@@ -591,17 +412,8 @@ struct GameView: View {
                         handleTap(id: id, isCorrect: isCorrect)
                     }
                 )
-            }
-            
-            // Next round balloons (flying in from bottom)
-            if showTransition {
-                ForEach(nextRoundBalloons) { balloon in
-                    BalloonView(
-                        balloon: balloon,
-                        screenHeight: geometry.size.height,
-                        onTap: { _, _ in } // No interaction during transition
-                    )
-                }
+                .opacity(roundActive ? 1.0 : 0.0)
+                .animation(.easeIn(duration: 0.5), value: roundActive)
             }
             
             // UI Overlays
@@ -625,8 +437,6 @@ struct GameView: View {
                     gameState = .waiting
                     cleanupTimers()
                     balloons.removeAll()
-                    nextRoundBalloons.removeAll()
-                    showTransition = false
                     isPaused = false
                 }) {
                     HStack {
@@ -1008,11 +818,9 @@ struct GameView: View {
         appState.shouldPauseGame = false
         gameState = .waiting
         balloons.removeAll()
-        nextRoundBalloons.removeAll()
         currentIdioms.removeAll()
         correctIdiom = nil
         animateNewRound = false
-        showTransition = false
         isPaused = false
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -1040,14 +848,12 @@ struct GameView: View {
     private func loadNewRound() {
         // Don't stop timers - keep them running for faster transitions
         balloons.removeAll()
-        nextRoundBalloons.removeAll()
         currentIdioms.removeAll()
         correctIdiom = nil
         userInteractedThisRound = false
-        roundActive = true
+        roundActive = false  // Start as false for fade-in animation
         roundTimeRemaining = Int(roundDuration)
         totalRounds += 1
-        showTransition = false
         
         // Load 4 random idioms from Core Data
         loadRandomIdioms { idioms in
@@ -1061,6 +867,11 @@ struct GameView: View {
                 self.correctIdiom = self.currentIdioms.randomElement()
                 self.createBalloonsForRound()
                 self.startRoundTimer()
+                
+                // Enable round and trigger fade-in animation
+                withAnimation(.easeIn(duration: 0.5)) {
+                    self.roundActive = true
+                }
             }
         }
     }
@@ -1123,13 +934,19 @@ struct GameView: View {
         // Shuffle answers
         answers.shuffle()
         
-        // Create balloons
+        // Create balloons with scattered positions
         for i in 0..<balloonsPerRound {
             let randomColor = balloonColors.randomElement()!
-            let xPos = CGFloat(i) * (screenWidth / CGFloat(balloonsPerRound)) + (screenWidth / CGFloat(balloonsPerRound) / 2)
+            
+            // Scatter balloons horizontally and vertically
+            let column = i % 2  // 2 columns
+            let row = i / 2     // 2 rows
+            
+            let xPos = CGFloat(column) * (screenWidth * 0.6) + (screenWidth * 0.2) + CGFloat.random(in: -30...30)
+            let baseY = screenHeight * (0.15 + CGFloat(row) * 0.25) + CGFloat.random(in: -40...40)
+            
             let randomPhase = Double.random(in: 0...(.pi * 2))
             let randomSize = CGSize(width: CGFloat.random(in: 60...75), height: CGFloat.random(in: 95...115))
-            let baseY = screenHeight * 0.15 + CGFloat.random(in: -20...20)
             
             let newBalloon = Balloon(
                 answer: answers[i],
@@ -1227,121 +1044,35 @@ struct GameView: View {
     }
     
     private func flyAwayAllBalloons() {
-        // Prepare next round balloons if game continues
-        if gameTimeRemaining > 0 {
-            prepareNextRound()
-        }
-        
-        flyAwayTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
-            var balloonsRemaining = false
-            
-            // Move current balloons up (fly away)
-            for index in self.balloons.indices {
-                self.balloons[index].isTapped = true
-                self.balloons[index].yOffset -= 12
-                
-                if self.balloons[index].yOffset > -100 {
-                    balloonsRemaining = true
-                }
-            }
-            
-            // Move next balloons up (fly in) if transitioning
-            if self.showTransition {
-                for index in self.nextRoundBalloons.indices {
-                    self.nextRoundBalloons[index].yOffset -= 8 // Slower for smooth transition
-                    
-                    // Stop when they reach target position
-                    if self.nextRoundBalloons[index].yOffset <= self.nextRoundBalloons[index].baseYOffset {
-                        self.nextRoundBalloons[index].yOffset = self.nextRoundBalloons[index].baseYOffset
-                    }
-                }
-            }
-            
-            if !balloonsRemaining {
-                timer.invalidate()
-                
-                // Transition to next round
-                if self.gameTimeRemaining > 0 {
-                    self.transitionToNextRound()
-                } else {
-                    self.endGame()
-                }
+        // Simple fade out animation for current balloons
+        withAnimation(.easeOut(duration: 0.8)) {
+            for index in balloons.indices {
+                balloons[index].isTapped = true
             }
         }
-    }
-    
-    private func prepareNextRound() {
-        // Load next round data
-        loadRandomIdioms { idioms in
-            guard idioms.count >= 4 else { return }
-            
-            DispatchQueue.main.async {
-                let nextIdioms = Array(idioms.prefix(4))
-                let nextCorrectIdiom = nextIdioms.randomElement()
-                
-                // Create next round balloons starting from bottom of screen
-                self.createNextRoundBalloons(idioms: nextIdioms, correctIdiom: nextCorrectIdiom)
-                self.showTransition = true
+        
+        // Prepare next round after fade out
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            if self.gameTimeRemaining > 0 {
+                self.transitionToNextRound()
+            } else {
+                self.endGame()
             }
-        }
-    }
-    
-    private func createNextRoundBalloons(idioms: [NSManagedObject], correctIdiom: NSManagedObject?) {
-        guard let correctIdiom = correctIdiom else { return }
-        
-        nextRoundBalloons.removeAll()
-        
-        // Store next round data for later use
-        self.nextRoundIdioms = idioms
-        self.nextCorrectIdiom = correctIdiom
-        
-        // Create answers
-        var answers: [Answer] = []
-        for idiom in idioms {
-            let word = idiom.value(forKey: "word") as? String ?? ""
-            let isCorrect = (idiom.value(forKey: "word") as? String) == (correctIdiom.value(forKey: "word") as? String)
-            answers.append(Answer(text: word, isCorrect: isCorrect))
-        }
-        answers.shuffle()
-        
-        // Create balloons starting from bottom
-        for i in 0..<balloonsPerRound {
-            let randomColor = balloonColors.randomElement()!
-            let xPos = CGFloat(i) * (screenWidth / CGFloat(balloonsPerRound)) + (screenWidth / CGFloat(balloonsPerRound) / 2)
-            let randomPhase = Double.random(in: 0...(.pi * 2))
-            let randomSize = CGSize(width: CGFloat.random(in: 60...75), height: CGFloat.random(in: 95...115))
-            let targetY = screenHeight * 0.15 + CGFloat.random(in: -20...20)
-            
-            let newBalloon = Balloon(
-                answer: answers[i],
-                color: randomColor,
-                yOffset: screenHeight + 100, // Start below screen
-                xPosition: xPos,
-                phase: randomPhase,
-                baseYOffset: targetY, // Target position
-                size: randomSize
-            )
-            nextRoundBalloons.append(newBalloon)
         }
     }
     
     private func transitionToNextRound() {
-        // Replace current balloons with next round balloons
-        balloons = nextRoundBalloons
-        currentIdioms = nextRoundIdioms
-        correctIdiom = nextCorrectIdiom
-        nextRoundBalloons.removeAll()
-        showTransition = false
+        // Clear current balloons
+        balloons.removeAll()
         
         // Update game state
         currentRound += 1
-        roundActive = true
+        roundActive = false  // Start as false for fade-in animation
         roundTimeRemaining = Int(roundDuration)
         userInteractedThisRound = false
         
-        // Start new round timer and animations
-        startRoundTimer()
-        startBobbingAnimation()
+        // Load new round directly with fade-in animation
+        loadNewRound()
     }
     
     private func endRoundDueToTimeout() {
@@ -1402,8 +1133,4 @@ struct GameView: View {
         // Resume bobbing animation
         startBobbingAnimation()
     }
-}
-
-extension Color {
-    static let skyblue = Color(red: 0.5, green: 0.8, blue: 1.0)
 }
