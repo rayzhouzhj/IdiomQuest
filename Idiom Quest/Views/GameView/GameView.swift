@@ -8,172 +8,600 @@
 import SwiftUI
 import CoreData
 
+// MARK: - Game States
+enum GameState {
+    case waiting
+    case playing
+    case gameOver
+}
+
 // MARK: - Game View
 struct GameView: View {
+    @Environment(\.managedObjectContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    
+    // Game State
+    @State private var gameState: GameState = .waiting
     @State private var balloons: [Balloon] = []
+    @State private var currentIdioms: [NSManagedObject] = []
+    @State private var correctIdiom: NSManagedObject?
     @State private var showConfetti = false
+    
+    // Scoring & Progress
     @State private var score = 0
     @State private var currentRound = 1
+    @State private var correctAnswers = 0
+    @State private var totalRounds = 0
+    
+    // Timers
+    @State private var gameTimer: Timer?
     @State private var roundTimer: Timer?
-    @State private var countdownTimer: Timer?
     @State private var bobbingTimer: Timer?
     @State private var flyAwayTimer: Timer?
-    @State private var roundTimeRemaining = 10  // Countdown seconds
+    @State private var gameTimeRemaining = 60  // 1 minute game
+    @State private var roundTimeRemaining = 8   // 8 seconds per round
+    
+    // UI State
     @State private var roundActive = false
     @State private var userInteractedThisRound = false
     @State private var screenWidth: CGFloat = 0
     @State private var screenHeight: CGFloat = 0
+    @State private var animateNewRound = false
     
-    let answers: [Answer] = [
-        Answer(text: "Correct Answer", isCorrect: true),
-        Answer(text: "Wrong 1", isCorrect: false),
-        Answer(text: "Wrong 2", isCorrect: false),
-        Answer(text: "Wrong 3", isCorrect: false)
-    ]
-    
-    let balloonColors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink]
+    let balloonColors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan]
     let balloonsPerRound = 4
-    let roundDuration: TimeInterval = 10.0
+    let roundDuration: TimeInterval = 8.0
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Sky background with clouds
-                ZStack {
-                    LinearGradient(
-                        gradient: Gradient(colors: [.skyblue.opacity(0.9), .white.opacity(0.8)]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                    
-                    ForEach(0..<3) { i in
-                        Ellipse()
-                            .fill(.white.opacity(0.3))
-                            .frame(width: CGFloat.random(in: 80...150), height: 40)
-                            .offset(x: CGFloat(i * 120) + sin(Date().timeIntervalSince1970 * 0.5 + Double(i)) * 20, y: 100 + CGFloat(i * 50))
-                            .animation(.linear(duration: 20).repeatForever(autoreverses: false), value: Date().timeIntervalSince1970)
-                    }
-                }
+                // Sky background with gradient
+                backgroundView
                 
-                // Balloons layer
-                ForEach(balloons) { balloon in
-                    BalloonView(
-                        balloon: balloon,
-                        screenHeight: geometry.size.height,
-                        onTap: { id, isCorrect in
-                            handleTap(id: id, isCorrect: isCorrect)
-                        }
-                    )
-                }
-                
-                // UI Overlays
-                VStack {
-                    // Score, Round, and Countdown at top
-                    HStack {
-                        VStack(alignment: .leading) {
-                            LocalizedText("Round: \(currentRound)")
-                                .font(.title2.bold())
-                                .foregroundColor(.white)
-                                .shadow(color: .black.opacity(0.5), radius: 2)
-                            if roundActive {
-                                LocalizedText("Time: \(roundTimeRemaining)s")
-                                    .font(.subheadline)
-                                    .foregroundColor(.yellow)
-                                    .shadow(color: .black.opacity(0.5), radius: 1)
-                            }
-                        }
-                        Spacer()
-                        LocalizedText("Score: \(score)")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.5), radius: 2)
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(.black.opacity(0.3))
-                            .blur(radius: 2)
-                    )
-                    .padding(.horizontal)
-                    
-                    if roundActive && balloons.count == 0 {
-                        LocalizedText("Round Complete! Starting next...")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(.black.opacity(0.3))
-                                    .blur(radius: 2)
-                            )
-                    }
-                    
-                    Spacer()
-                    
-                    // Tips at bottom
-                    LocalizedText("Tip: Tap the balloon with the correct answer to score +10! Wrong answers deduct 5 points.")
-                        .font(.subheadline.bold())
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(.black.opacity(0.3))
-                                .blur(radius: 2)
-                        )
-                        .padding(.horizontal)
-                        .padding(.bottom)
-                }
-                
-                // Confetti
-                if showConfetti {
-                    ConfettiView()
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                showConfetti = false
-                            }
-                        }
+                // Game content based on state
+                switch gameState {
+                    case .waiting:
+                        startScreenView
+                    case .playing:
+                        gamePlayView(geometry: geometry)
+                    case .gameOver:
+                        gameOverView
                 }
             }
             .onAppear {
                 screenWidth = geometry.size.width
                 screenHeight = geometry.size.height
-                startNewRound()
             }
             .onDisappear {
-                roundTimer?.invalidate()
-                countdownTimer?.invalidate()
-                bobbingTimer?.invalidate()
-                flyAwayTimer?.invalidate()
+                cleanupTimers()
+            }
+        }
+        .navigationBarHidden(true)
+    }
+    
+    // MARK: - Background View
+    private var backgroundView: some View {
+        ZStack {
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.blue.opacity(0.8),
+                    Color.cyan.opacity(0.6),
+                    Color.white.opacity(0.4)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            // Animated clouds
+            ForEach(0..<4) { i in
+                Ellipse()
+                    .fill(.white.opacity(0.3))
+                    .frame(
+                        width: CGFloat.random(in: 80...150),
+                        height: CGFloat.random(in: 30...50)
+                    )
+                    .offset(
+                        x: CGFloat(i * 100) + sin(Date().timeIntervalSince1970 * 0.3 + Double(i)) * 30,
+                        y: 80 + CGFloat(i * 40)
+                    )
+                    .animation(
+                        .linear(duration: 25).repeatForever(autoreverses: false),
+                        value: Date().timeIntervalSince1970
+                    )
             }
         }
     }
     
-    private func startNewRound() {
-        // Invalidate existing timers
-        roundTimer?.invalidate()
-        countdownTimer?.invalidate()
-        bobbingTimer?.invalidate()
-        flyAwayTimer?.invalidate()
+    // MARK: - Start Screen
+    private var startScreenView: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            
+            VStack(spacing: 20) {
+                Text("🎈")
+                    .font(.system(size: 80))
+                    .scaleEffect(animateNewRound ? 1.2 : 1.0)
+                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: animateNewRound)
+                
+                LocalizedText("成語氣球遊戲")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.white, .yellow]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 2)
+                
+                LocalizedText("在60秒內答對最多成語！")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .shadow(color: .black.opacity(0.3), radius: 1)
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 15) {
+                HStack(spacing: 20) {
+                    VStack {
+                        Text("⏱️")
+                            .font(.title)
+                        LocalizedText("60秒")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                    }
+                    
+                    VStack {
+                        Text("🎯")
+                            .font(.title)
+                        LocalizedText("答對+10分")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                    }
+                    
+                    VStack {
+                        Text("🎈")
+                            .font(.title)
+                        LocalizedText("4個選項")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(.white.opacity(0.2))
+                        .blur(radius: 1)
+                )
+                
+                Button(action: startGame) {
+                    HStack {
+                        Image(systemName: "play.fill")
+                            .font(.title2)
+                        LocalizedText("開始遊戲")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, 15)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.green, .mint]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(25)
+                    .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                    .scaleEffect(animateNewRound ? 1.05 : 1.0)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            Spacer()
+            
+            Button(action: { dismiss() }) {
+                HStack {
+                    Image(systemName: "xmark")
+                    LocalizedText("返回")
+                }
+                .foregroundColor(.white)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.black.opacity(0.3))
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding()
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.8)) {
+                animateNewRound = true
+            }
+        }
+    }
+    
+    
+    // MARK: - Game Play View
+    private func gamePlayView(geometry: GeometryProxy) -> some View {
+        ZStack {
+            // Balloons layer
+            ForEach(balloons) { balloon in
+                BalloonView(
+                    balloon: balloon,
+                    screenHeight: geometry.size.height,
+                    onTap: { id, isCorrect in
+                        handleTap(id: id, isCorrect: isCorrect)
+                    }
+                )
+            }
+            
+            // UI Overlays
+            VStack {
+                // Top HUD
+                gameHUD
+                
+                Spacer()
+                
+                // Bottom explanation area
+                explanationArea
+            }
+            
+            // Confetti
+            if showConfetti {
+                ConfettiView()
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            showConfetti = false
+                        }
+                    }
+            }
+        }
+    }
+    
+    // MARK: - Game HUD
+    private var gameHUD: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 5) {
+                LocalizedText("第 \(currentRound) 回合")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 2)
+                
+                if roundActive {
+                    HStack {
+                        Image(systemName: "timer")
+                            .foregroundColor(.yellow)
+                        LocalizedText("\(roundTimeRemaining)秒")
+                            .font(.headline)
+                            .foregroundColor(roundTimeRemaining <= 3 ? .red : .yellow)
+                            .fontWeight(.bold)
+                    }
+                    .shadow(color: .black.opacity(0.5), radius: 1)
+                }
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 5) {
+                HStack {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(.yellow)
+                    LocalizedText("\(score)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                }
+                .shadow(color: .black.opacity(0.5), radius: 2)
+                
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .foregroundColor(.orange)
+                    LocalizedText("\(gameTimeRemaining)秒")
+                        .font(.subheadline)
+                        .foregroundColor(gameTimeRemaining <= 10 ? .red : .white)
+                        .fontWeight(.medium)
+                }
+                .shadow(color: .black.opacity(0.5), radius: 1)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 15)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 5)
+        )
+        .padding(.horizontal)
+    }
+    
+    // MARK: - Explanation Area
+    private var explanationArea: some View {
+        VStack(spacing: 10) {
+            if let correctIdiom = correctIdiom {
+                LocalizedText("找出這個成語:")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .fontWeight(.bold)
+                    .shadow(color: .black.opacity(0.5), radius: 1)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    LocalizedText((correctIdiom.value(forKey: "explanation") as? String ?? "").localized)
+                        .font(.body)
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .shadow(color: .black.opacity(0.5), radius: 1)
+                }
+            } else {
+                LocalizedText("載入中...")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 1)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 15)
+                .fill(.black.opacity(0.4))
+                .blur(radius: 1)
+        )
+        .padding(.horizontal)
+        .padding(.bottom)
+    }
+    
+    // MARK: - Game Over View
+    private var gameOverView: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            
+            VStack(spacing: 20) {
+                Text("🎈")
+                    .font(.system(size: 60))
+                
+                LocalizedText("遊戲結束!")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.white, .yellow]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 2)
+            }
+            
+            VStack(spacing: 15) {
+                HStack {
+                    VStack {
+                        LocalizedText("最終得分")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text("\(score)")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundColor(.yellow)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack {
+                        LocalizedText("答對題數")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text("\(correctAnswers)/\(totalRounds)")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundColor(.green)
+                    }
+                }
+                
+                let accuracy = totalRounds > 0 ? (Double(correctAnswers) / Double(totalRounds) * 100) : 0
+                LocalizedText("準確率: \(Int(accuracy))%")
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.3), radius: 1)
+            }
+            .padding(25)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: .black.opacity(0.2), radius: 10)
+            )
+            
+            Spacer()
+            
+            VStack(spacing: 15) {
+                Button(action: restartGame) {
+                    HStack {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.title2)
+                        LocalizedText("再玩一次")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.vertical, 15)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.green, .mint]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(25)
+                    .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                Button(action: { dismiss() }) {
+                    HStack {
+                        Image(systemName: "house.fill")
+                        LocalizedText("返回主頁")
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(.black.opacity(0.3))
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding()
+    }
+    
+    
+    // MARK: - Game Logic Methods
+    
+    private func startGame() {
+        gameState = .playing
+        score = 0
+        currentRound = 1
+        correctAnswers = 0
+        totalRounds = 0
+        gameTimeRemaining = 60
         
-        // Reset state
+        // Start main game timer
+        gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if gameTimeRemaining > 0 {
+                gameTimeRemaining -= 1
+            } else {
+                endGame()
+            }
+        }
+        
+        loadNewRound()
+    }
+    
+    private func restartGame() {
+        cleanupTimers()
+        gameState = .waiting
         balloons.removeAll()
+        currentIdioms.removeAll()
+        correctIdiom = nil
+        animateNewRound = false
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeInOut(duration: 0.8)) {
+                self.animateNewRound = true
+            }
+        }
+    }
+    
+    private func endGame() {
+        cleanupTimers()
+        roundActive = false
+        gameState = .gameOver
+        
+        // Save high score if needed
+        let currentHighScore = UserDefaults.standard.integer(forKey: "HighScore")
+        if score > currentHighScore {
+            UserDefaults.standard.set(score, forKey: "HighScore")
+        }
+    }
+    
+    private func loadNewRound() {
+        cleanupRoundTimers()
+        balloons.removeAll()
+        currentIdioms.removeAll()
+        correctIdiom = nil
         userInteractedThisRound = false
         roundActive = true
-        roundTimeRemaining = 10
+        roundTimeRemaining = Int(roundDuration)
+        totalRounds += 1
         
-        // Spawn balloons near top
-        let shuffledAnswers = answers.shuffled()
+        // Load 4 random idioms from Core Data
+        loadRandomIdioms { idioms in
+            guard idioms.count >= 4 else {
+                print("Not enough idioms loaded")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.currentIdioms = Array(idioms.prefix(4))
+                self.correctIdiom = self.currentIdioms.randomElement()
+                self.createBalloonsForRound()
+                self.startRoundTimer()
+            }
+        }
+    }
+    
+    private func loadRandomIdioms(completion: @escaping ([NSManagedObject]) -> Void) {
+        let context = CoreDataManager.shared.context
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
+            
+            do {
+                let totalCount = try context.count(for: request)
+                guard totalCount >= 4 else {
+                    completion([])
+                    return
+                }
+                
+                // Get random idioms
+                var randomIdioms: [NSManagedObject] = []
+                var attempts = 0
+                let maxAttempts = 20
+                
+                while randomIdioms.count < 4 && attempts < maxAttempts {
+                    let randomOffset = Int.random(in: 0..<(totalCount - 4))
+                    request.fetchOffset = randomOffset
+                    request.fetchLimit = 8 // Fetch more to ensure uniqueness
+                    
+                    let results = try context.fetch(request)
+                    
+                    for result in results {
+                        if randomIdioms.count < 4 && !randomIdioms.contains(where: { 
+                            ($0.value(forKey: "word") as? String) == (result.value(forKey: "word") as? String)
+                        }) {
+                            randomIdioms.append(result)
+                        }
+                    }
+                    attempts += 1
+                }
+                
+                completion(randomIdioms)
+            } catch {
+                print("Failed to load random idioms: \(error)")
+                completion([])
+            }
+        }
+    }
+    
+    private func createBalloonsForRound() {
+        guard !currentIdioms.isEmpty, let correctIdiom = correctIdiom else { return }
+        
+        // Create answers from the loaded idioms
+        var answers: [Answer] = []
+        
+        for idiom in currentIdioms {
+            let word = idiom.value(forKey: "word") as? String ?? ""
+            let isCorrect = (idiom.value(forKey: "word") as? String) == (correctIdiom.value(forKey: "word") as? String)
+            answers.append(Answer(text: word, isCorrect: isCorrect))
+        }
+        
+        // Shuffle answers
+        answers.shuffle()
+        
+        // Create balloons
         for i in 0..<balloonsPerRound {
             let randomColor = balloonColors.randomElement()!
             let xPos = CGFloat(i) * (screenWidth / CGFloat(balloonsPerRound)) + (screenWidth / CGFloat(balloonsPerRound) / 2)
             let randomPhase = Double.random(in: 0...(.pi * 2))
-            let randomSize = CGSize(width: CGFloat.random(in: 55...70), height: CGFloat.random(in: 90...110))
-            let baseY = screenHeight * 0.15  // Start just below score (15% from top)
+            let randomSize = CGSize(width: CGFloat.random(in: 60...75), height: CGFloat.random(in: 95...115))
+            let baseY = screenHeight * 0.15 + CGFloat.random(in: -20...20)
             
             let newBalloon = Balloon(
-                answer: shuffledAnswers[i % shuffledAnswers.count],
+                answer: answers[i],
                 color: randomColor,
                 yOffset: baseY,
                 xPosition: xPos,
@@ -182,200 +610,120 @@ struct GameView: View {
                 size: randomSize
             )
             balloons.append(newBalloon)
-            print("Spawned balloon \(i) at x: \(xPos), y: \(baseY)")
         }
         
-        // Start countdown timer (1-second intervals)
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if roundTimeRemaining > 0 {
-                roundTimeRemaining -= 1
+        startBobbingAnimation()
+    }
+    
+    private func startRoundTimer() {
+        roundTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if self.roundTimeRemaining > 0 {
+                self.roundTimeRemaining -= 1
             } else {
-                endRoundDueToTimeout()
+                self.endRoundDueToTimeout()
             }
         }
-        
-        // Start 10-second round timer (for precision, but countdown handles display)
-        roundTimer = Timer.scheduledTimer(withTimeInterval: roundDuration, repeats: false) { _ in
-            endRoundDueToTimeout()
-        }
-        
-        // Start bobbing animation
-        startBobbingAnimation()
     }
     
     private func startBobbingAnimation() {
         bobbingTimer?.invalidate()
-        bobbingTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { _ in
+        // Use 30fps instead of 60fps for better performance while still smooth
+        bobbingTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { _ in
             let currentTime = Date().timeIntervalSince1970
             
-            for index in balloons.indices {
-                if !balloons[index].isTapped {
-                    balloons[index].yOffset = balloons[index].baseYOffset + sin(currentTime * 2 + balloons[index].phase) * 15  // Smaller amplitude
-                    balloons[index].xOffset = sin(currentTime * 1 + balloons[index].phase) * 10
+            // Batch update balloons for better performance
+            var indices: [Int] = []
+            for index in self.balloons.indices {
+                if !self.balloons[index].isTapped {
+                    indices.append(index)
                 }
+            }
+            
+            // Update positions in batch
+            for index in indices {
+                self.balloons[index].yOffset = self.balloons[index].baseYOffset + 
+                    sin(currentTime * 2 + self.balloons[index].phase) * 10
+                self.balloons[index].xOffset = 
+                    sin(currentTime * 1.2 + self.balloons[index].phase) * 6
             }
         }
     }
     
     private func handleTap(id: UUID, isCorrect: Bool) {
+        guard roundActive else { return }
+        
         userInteractedThisRound = true
+        roundActive = false
+        
         if let index = balloons.firstIndex(where: { $0.id == id }) {
             balloons[index].isTapped = true
             
             if isCorrect {
                 score += 10
+                correctAnswers += 1
                 showConfetti = true
+                
+                // Haptic feedback
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
             } else {
-                score -= 5
+                // Wrong answer - no points deducted, just move to next round
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.error)
             }
             
-            // Invalidate timers and fly away all balloons (including tapped one)
-            roundTimer?.invalidate()
-            countdownTimer?.invalidate()
-            bobbingTimer?.invalidate()
-            
-            // Fly away remaining balloons
+            cleanupRoundTimers()
             flyAwayAllBalloons()
         }
     }
     
     private func flyAwayAllBalloons() {
         flyAwayTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
-            for index in balloons.indices.reversed() {
-                balloons[index].isTapped = true  // Stop bobbing
-                balloons[index].yOffset -= 5  // Fly upward
-                if balloons[index].yOffset < -100 {
-                    balloons.remove(at: index)
+            var balloonsRemaining = false
+            
+            for index in self.balloons.indices {
+                self.balloons[index].isTapped = true
+                self.balloons[index].yOffset -= 6
+                
+                if self.balloons[index].yOffset > -150 {
+                    balloonsRemaining = true
                 }
             }
-            if balloons.isEmpty {
+            
+            if !balloonsRemaining {
                 timer.invalidate()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {  // Delay before next round
-                    currentRound += 1
-                    startNewRound()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    if self.gameTimeRemaining > 0 {
+                        self.currentRound += 1
+                        self.loadNewRound()
+                    } else {
+                        self.endGame()
+                    }
                 }
             }
         }
     }
     
     private func endRoundDueToTimeout() {
-        print("Timeout: Flying away balloons")
+        roundActive = false
+        cleanupRoundTimers()
+        flyAwayAllBalloons()
+    }
+    
+    private func cleanupRoundTimers() {
         roundTimer?.invalidate()
-        countdownTimer?.invalidate()
         bobbingTimer?.invalidate()
-        
-        flyAwayAllBalloons()  // Reuse fly-away logic
+    }
+    
+    private func cleanupTimers() {
+        gameTimer?.invalidate()
+        roundTimer?.invalidate()
+        bobbingTimer?.invalidate()
+        flyAwayTimer?.invalidate()
     }
 }
 
-
-//struct GameViewOld: View {
-//    @Environment(\.managedObjectContext) private var context
-//    @State private var explanation = ""
-//    @State private var correctWord = ""
-//    @State private var balloonWords: [String] = []
-//    @State private var score = 0
-//    @State private var timeLeft = 60
-//    @State private var timer: Timer? = nil
-//    @State private var gameActive = false
-//    @State private var highScore = UserDefaults.standard.integer(forKey: "highScore")
-//    @State private var showGameOver = false
-//    
-//    var body: some View {
-//        VStack(spacing: 20) {
-//            LocalizedText("Score: \(score)")
-//                .font(.title)
-//            
-//            LocalizedText("Time: \(timeLeft)")
-//                .font(.title)
-//                .foregroundColor(timeLeft <= 10 ? .red : .primary)
-//            
-//            Text(explanation)
-//                .font(.body)
-//                .multilineTextAlignment(.center)
-//                .padding()
-//            
-//            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 20) {
-//                ForEach(Array(balloonWords.enumerated()), id: \.offset) { index, word in
-//                    BalloonView(word: word, isCorrect: word == correctWord, onTap: {
-//                        tapBalloon(word)
-//                    })
-//                }
-//            }
-//            
-//            Button(gameActive ? "Stop Game" : "Start Game") {
-//                if gameActive {
-//                    stopGame()
-//                } else {
-//                    startGame()
-//                }
-//            }
-//            .padding()
-//            .background(Color.blue)
-//            .foregroundColor(.white)
-//            .cornerRadius(8)
-//        }
-//        .navigationTitle("Balloon Game")
-//        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
-//            if gameActive && timeLeft > 0 {
-//                timeLeft -= 1
-//                if timeLeft <= 0 {
-//                    stopGame()
-//                }
-//            }
-//        }
-//        .alert("Game Over", isPresented: $showGameOver) {
-//            Button("Play Again") {
-//                startGame()
-//            }
-//        } message: {
-//            LocalizedText("Final Score: \(score)\nHigh Score: \(highScore)")
-//        }
-//    }
-//    
-//    private func startGame() {
-//        gameActive = true
-//        score = 0
-//        timeLeft = 60
-//        loadNextRound()
-//    }
-//    
-//    private func stopGame() {
-//        gameActive = false
-//        timer?.invalidate()
-//        if score > highScore {
-//            highScore = score
-//            UserDefaults.standard.set(highScore, forKey: "highScore")
-//        }
-//        showGameOver = true
-//    }
-//    
-//    private func loadNextRound() {
-//        let context = CoreDataManager.shared.context
-//        let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
-//        request.fetchLimit = 5 // Fetch 5 to choose 4
-//        do {
-//            let idioms = try context.fetch(request).shuffled()
-//            if idioms.count >= 5 {
-//                correctWord = idioms[0].value(forKey: "word") as? String ?? ""
-//                explanation = idioms[0].value(forKey: "explanation") as? String ?? ""
-//                balloonWords = idioms.prefix(4).map { $0.value(forKey: "word") as? String ?? "" }.shuffled()
-//            }
-//        } catch {
-//            print("Failed to load idioms: \(error)")
-//        }
-//    }
-//    
-//    private func tapBalloon(_ word: String) {
-//        if word == correctWord {
-//            score += 10
-//            loadNextRound()
-//        }
-//        // Wrong answer: No points, load next
-//        loadNextRound()
-//    }
-//}
+extension Color {
+    static let skyblue = Color(red: 0.5, green: 0.8, blue: 1.0)
+}

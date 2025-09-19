@@ -43,8 +43,3 @@ struct ConfettiView: View {
         }
     }
 }
-
-// MARK: - Color Extension
-extension Color {
-    static let skyblue = Color(red: 0.529, green: 0.808, blue: 0.922)
-}

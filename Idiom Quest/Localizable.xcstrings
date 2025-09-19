@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
+    "%lld" : {
+
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "⏱️" : {
+
+    },
+    "🎈" : {
+
+    },
+    "🎯" : {
+
+    },
     "Game" : {
 
     },
