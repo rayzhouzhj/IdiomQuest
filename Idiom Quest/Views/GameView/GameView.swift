@@ -20,6 +20,9 @@ struct GameView: View {
     @State private var currentIdioms: [NSManagedObject] = []
     @State private var correctIdiom: NSManagedObject?
     @State private var showConfetti = false
+    @State private var showSuccessText = false
+    @State private var successTextScale: CGFloat = 0.5
+    @State private var successTextOpacity: Double = 0.0
     
     // Scoring & Progress
     @State private var score = 0
@@ -52,7 +55,7 @@ struct GameView: View {
     @State private var bobbingTimer: Timer?
     @State private var flyAwayTimer: Timer?
     @State private var gameTimeRemaining = 60  // Will be set based on selectedDuration
-    @State private var roundTimeRemaining = 8   // 8 seconds per round
+    @State private var roundTimeRemaining = 15   // 15 seconds per round
     
     // UI State
     @State private var roundActive = false
@@ -461,12 +464,51 @@ struct GameView: View {
             
             // Confetti
             if showConfetti {
-                ConfettiView()
+                ConfettiView(sourcePosition: balloonStartPosition)
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
                             showConfetti = false
                         }
                     }
+            }
+            
+            // Success Text Animation
+            if showSuccessText {
+                VStack {
+                    Spacer()
+                    
+                    Text("🎉 Correct! 🎉")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.yellow, .orange, .red, .pink],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                        .scaleEffect(successTextScale)
+                        .opacity(successTextOpacity)
+                        .onAppear {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                                successTextScale = 1.2
+                                successTextOpacity = 1.0
+                            }
+                            
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7).delay(0.2)) {
+                                successTextScale = 1.0
+                            }
+                            
+                            withAnimation(.easeOut(duration: 0.5).delay(1.5)) {
+                                successTextOpacity = 0.0
+                                successTextScale = 0.8
+                            }
+                        }
+                    
+                    Spacer()
+                    Spacer()
+                    Spacer()
+                }
             }
             
             // Flying Balloon Effect
@@ -1009,6 +1051,16 @@ struct GameView: View {
                 score += 10
                 correctAnswers += 1
                 showConfetti = true
+                showSuccessText = true
+                
+                // Reset success text state for next time
+                successTextScale = 0.5
+                successTextOpacity = 0.0
+                
+                // Hide success text after delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    showSuccessText = false
+                }
                 
                 // Trigger balloon flying effect
                 balloonStartPosition = CGPoint(x: balloons[index].xPosition, y: balloons[index].yOffset)

@@ -213,7 +213,7 @@ struct LearningView: View {
             }
         }
         .overlay(
-            showConfetti ? ConfettiView() : nil
+            showConfetti ? ConfettiView(sourcePosition: nil) : nil
         )
     }
     
