@@ -1,23 +1,7 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
-    "Balloon Game" : {
-
-    },
-    "Final Score: %lld\nHigh Score: %lld" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Final Score: %1$lld\nHigh Score: %2$lld"
-          }
-        }
-      }
-    },
     "Game" : {
-
-    },
-    "Game Over" : {
 
     },
     "Learned Idioms" : {
@@ -43,22 +27,22 @@
         }
       }
     },
-    "Play Again" : {
+    "Review" : {
 
     },
-    "Review" : {
+    "Round Complete! Starting next..." : {
+
+    },
+    "Round: %lld" : {
 
     },
     "Score: %lld" : {
 
     },
-    "Start Game" : {
+    "Time: %llds" : {
 
     },
-    "Stop Game" : {
-
-    },
-    "Time: %lld" : {
+    "Tip: Tap the balloon with the correct answer to score +10! Wrong answers deduct 5 points." : {
 
     }
   },
