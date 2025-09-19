@@ -934,16 +934,15 @@ struct GameView: View {
         // Shuffle answers
         answers.shuffle()
         
-        // Create balloons with scattered positions
+        // Create balloons in single row with alternating heights
         for i in 0..<balloonsPerRound {
             let randomColor = balloonColors.randomElement()!
             
-            // Scatter balloons horizontally and vertically
-            let column = i % 2  // 2 columns
-            let row = i / 2     // 2 rows
+            // Single row layout with alternating heights (low-high-low-high)
+            let isHigh = i % 2 == 1  // Odd indices (1, 3) are high
             
-            let xPos = CGFloat(column) * (screenWidth * 0.6) + (screenWidth * 0.2) + CGFloat.random(in: -30...30)
-            let baseY = screenHeight * (0.15 + CGFloat(row) * 0.25) + CGFloat.random(in: -40...40)
+            let xPos = screenWidth * (0.15 + CGFloat(i) * 0.18) + CGFloat.random(in: -15...15)
+            let baseY = isHigh ? screenHeight * 0.12 : screenHeight * 0.35  // High vs low positions
             
             let randomPhase = Double.random(in: 0...(.pi * 2))
             let randomSize = CGSize(width: CGFloat.random(in: 60...75), height: CGFloat.random(in: 95...115))

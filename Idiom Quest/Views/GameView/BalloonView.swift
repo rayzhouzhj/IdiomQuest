@@ -92,8 +92,6 @@ struct BalloonView: View {
                 .opacity(opacity)
                 .scaleEffect(scale)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
         .onTapGesture {
             handleTap()
         }
@@ -197,8 +195,6 @@ struct EmojiBalloonView: View {
                     .scaleEffect(scale)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
         .onTapGesture {
             handleTap()
         }
