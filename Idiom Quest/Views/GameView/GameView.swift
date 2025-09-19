@@ -185,36 +185,111 @@ struct GameView: View {
             Circle()
                 .fill(.white.opacity(opacity))
                 .frame(width: size.mainSize, height: size.mainSize)
+                .blur(radius: size.mainBlur)
             
             // Left puff
             Circle()
                 .fill(.white.opacity(opacity * 0.8))
                 .frame(width: size.puffSize, height: size.puffSize)
                 .offset(x: -size.offset, y: size.verticalOffset)
+                .blur(radius: size.puffBlur)
             
             // Right puff
             Circle()
                 .fill(.white.opacity(opacity * 0.8))
                 .frame(width: size.puffSize, height: size.puffSize)
                 .offset(x: size.offset, y: size.verticalOffset)
+                .blur(radius: size.puffBlur)
             
             // Top puff
             Circle()
                 .fill(.white.opacity(opacity * 0.9))
                 .frame(width: size.topSize, height: size.topSize)
                 .offset(x: 0, y: -size.topOffset)
+                .blur(radius: size.topBlur)
             
-            // Small decorative puffs
+            // Additional volumetric details - small wispy circles
+            ForEach(Array(0..<size.wispCount), id: \.self) { i in
+                Circle()
+                    .fill(.white.opacity(opacity * Double.random(in: 0.2...0.6)))
+                    .frame(width: size.wispSize, height: size.wispSize)
+                    .offset(
+                        x: CGFloat.random(in: -size.wispRange...size.wispRange),
+                        y: CGFloat.random(in: -size.wispRange*0.8...size.wispRange*0.8)
+                    )
+                    .blur(radius: Double.random(in: size.wispBlurMin...size.wispBlurMax))
+            }
+            
+            // Large clouds get extra structural elements
+            if case .large = size {
+                // Additional side volume puffs for large clouds
+                Circle()
+                    .fill(.white.opacity(opacity * 0.7))
+                    .frame(width: 45, height: 45)
+                    .offset(x: -55, y: -10)
+                    .blur(radius: 1.8)
+                
+                Circle()
+                    .fill(.white.opacity(opacity * 0.75))
+                    .frame(width: 40, height: 40)
+                    .offset(x: 60, y: 5)
+                    .blur(radius: 1.6)
+                
+                // Extra top volume for towering effect
+                Circle()
+                    .fill(.white.opacity(opacity * 0.65))
+                    .frame(width: 35, height: 35)
+                    .offset(x: -15, y: -40)
+                    .blur(radius: 2.0)
+                
+                Circle()
+                    .fill(.white.opacity(opacity * 0.6))
+                    .frame(width: 28, height: 28)
+                    .offset(x: 20, y: -35)
+                    .blur(radius: 1.8)
+            }
+            
+            // Medium detail puffs for more volume
+            Circle()
+                .fill(.white.opacity(opacity * 0.6))
+                .frame(width: size.mediumSize, height: size.mediumSize)
+                .offset(x: -size.offset * 0.6, y: -size.verticalOffset * 1.5)
+                .blur(radius: size.mediumBlur)
+            
+            Circle()
+                .fill(.white.opacity(opacity * 0.65))
+                .frame(width: size.mediumSize * 0.8, height: size.mediumSize * 0.8)
+                .offset(x: size.offset * 0.7, y: -size.verticalOffset * 0.5)
+                .blur(radius: size.mediumBlur * 1.2)
+            
+            // Bottom volume puffs
+            Circle()
+                .fill(.white.opacity(opacity * 0.5))
+                .frame(width: size.bottomSize, height: size.bottomSize)
+                .offset(x: -size.offset * 0.3, y: size.verticalOffset * 2)
+                .blur(radius: size.bottomBlur)
+            
+            Circle()
+                .fill(.white.opacity(opacity * 0.55))
+                .frame(width: size.bottomSize * 0.9, height: size.bottomSize * 0.9)
+                .offset(x: size.offset * 0.4, y: size.verticalOffset * 1.8)
+                .blur(radius: size.bottomBlur * 0.9)
+            
+            // Small decorative puffs (original ones)
             Circle()
                 .fill(.white.opacity(opacity * 0.6))
                 .frame(width: size.smallSize, height: size.smallSize)
                 .offset(x: size.smallOffset, y: -size.smallVertical)
+                .blur(radius: size.smallBlur)
             
             Circle()
                 .fill(.white.opacity(opacity * 0.6))
                 .frame(width: size.smallSize, height: size.smallSize)
                 .offset(x: -size.smallOffset * 0.7, y: size.smallVertical)
+                .blur(radius: size.smallBlur)
         }
+        // Overall blur scaled to cloud size
+        .blur(radius: size.overallBlur)
     }
     
     // MARK: - Cloud Size Configuration
@@ -223,63 +298,163 @@ struct GameView: View {
         
         var mainSize: CGFloat {
             switch self {
-            case .large: return 80
+            case .large: return 90  // Increased from 80
             case .medium: return 60
             }
         }
         
         var puffSize: CGFloat {
             switch self {
-            case .large: return 65
+            case .large: return 75  // Increased from 65
             case .medium: return 45
             }
         }
         
         var topSize: CGFloat {
             switch self {
-            case .large: return 55
+            case .large: return 65  // Increased from 55
             case .medium: return 40
             }
         }
         
         var smallSize: CGFloat {
             switch self {
-            case .large: return 25
+            case .large: return 30  // Increased from 25
             case .medium: return 20
+            }
+        }
+        
+        // Enhanced sizes for better large cloud details
+        var mediumSize: CGFloat {
+            switch self {
+            case .large: return 42  // Increased from 35
+            case .medium: return 28
+            }
+        }
+        
+        var bottomSize: CGFloat {
+            switch self {
+            case .large: return 38  // Increased from 30
+            case .medium: return 22
+            }
+        }
+        
+        var wispSize: CGFloat {
+            switch self {
+            case .large: return 15  // Increased from 12
+            case .medium: return 8
+            }
+        }
+        
+        var wispRange: CGFloat {
+            switch self {
+            case .large: return 55  // Increased from 45
+            case .medium: return 35
+            }
+        }
+        
+        var wispCount: Int {
+            switch self {
+            case .large: return 10  // Increased from 6
+            case .medium: return 6
+            }
+        }
+        
+        // Blur properties for better scaling
+        var mainBlur: Double {
+            switch self {
+            case .large: return 2.5
+            case .medium: return 2.0
+            }
+        }
+        
+        var puffBlur: Double {
+            switch self {
+            case .large: return 2.0
+            case .medium: return 1.5
+            }
+        }
+        
+        var topBlur: Double {
+            switch self {
+            case .large: return 1.8
+            case .medium: return 1.2
+            }
+        }
+        
+        var mediumBlur: Double {
+            switch self {
+            case .large: return 1.5
+            case .medium: return 1.0
+            }
+        }
+        
+        var bottomBlur: Double {
+            switch self {
+            case .large: return 2.2
+            case .medium: return 1.8
+            }
+        }
+        
+        var smallBlur: Double {
+            switch self {
+            case .large: return 1.3
+            case .medium: return 1.0
+            }
+        }
+        
+        var wispBlurMin: Double {
+            switch self {
+            case .large: return 0.8
+            case .medium: return 0.5
+            }
+        }
+        
+        var wispBlurMax: Double {
+            switch self {
+            case .large: return 2.5
+            case .medium: return 1.5
+            }
+        }
+        
+        var overallBlur: Double {
+            switch self {
+            case .large: return 0.8
+            case .medium: return 0.5
             }
         }
         
         var offset: CGFloat {
             switch self {
-            case .large: return 35
+            case .large: return 40  // Increased from 35
             case .medium: return 25
             }
         }
         
         var verticalOffset: CGFloat {
             switch self {
-            case .large: return 8
+            case .large: return 10  // Increased from 8
             case .medium: return 6
             }
         }
         
         var topOffset: CGFloat {
             switch self {
-            case .large: return 25
+            case .large: return 30  // Increased from 25
             case .medium: return 18
             }
         }
         
         var smallOffset: CGFloat {
             switch self {
-            case .large: return 50
+            case .large: return 60  // Increased from 50
             case .medium: return 35
             }
         }
         
         var smallVertical: CGFloat {
             switch self {
-            case .large: return 15
+            case .large: return 18  // Increased from 15
             case .medium: return 12
             }
         }
