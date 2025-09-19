@@ -484,7 +484,10 @@ struct SearchView: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(.ultraThinMaterial)
-                .stroke(.gray.opacity(0.2), lineWidth: 1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
         )
     }
     

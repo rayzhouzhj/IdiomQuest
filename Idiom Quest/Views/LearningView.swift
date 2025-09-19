@@ -277,8 +277,11 @@ struct LearningView: View {
                 .padding(20)
                 .background(
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(.green.opacity(0.1))
-                        .stroke(.green.opacity(0.3), lineWidth: 1)
+                        .fill(Color.green.opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 15)
+                                .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                        )
                 )
             } else {
                 LazyVGrid(columns: [
@@ -336,8 +339,11 @@ struct LearningView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(.orange.opacity(0.1))
-                .stroke(.orange.opacity(0.3), lineWidth: 1)
+                .fill(Color.orange.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
         )
         .onTapGesture {
             // Handle review word tap - could navigate to detailed view
