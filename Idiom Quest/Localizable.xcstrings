@@ -1,10 +1,10 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
-    "Game" : {
+    "%lld 個成語" : {
 
     },
-    "Learned Idioms" : {
+    "Game" : {
 
     },
     "Learning" : {
@@ -43,6 +43,36 @@
 
     },
     "Tip: Tap the balloon with the correct answer to score +10! Wrong answers deduct 5 points." : {
+
+    },
+    "上次複習: %@" : {
+
+    },
+    "太棒了！今天沒有需要複習的成語" : {
+
+    },
+    "已學會" : {
+
+    },
+    "已掌握" : {
+
+    },
+    "待複習" : {
+
+    },
+    "搜尋成語或拼音..." : {
+
+    },
+    "查看更多 (%lld)" : {
+
+    },
+    "標記為已學會" : {
+
+    },
+    "繼續學習新的成語吧！" : {
+
+    },
+    "複習 %lld 次" : {
 
     }
   },

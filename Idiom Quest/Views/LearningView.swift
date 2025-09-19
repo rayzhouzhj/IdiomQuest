@@ -13,65 +13,342 @@ struct LearningView: View {
     @State private var dailyIdiom: NSManagedObject?
     @State private var isLearned: Bool = false
     @State private var showReview = false
+    @State private var reviewWords: [NSManagedObject] = []
+    @State private var animateCard = false
+    @State private var showConfetti = false
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                if let idiom = dailyIdiom {
-                    VStack(spacing: 10) {
-                        Text((idiom.value(forKey: "word") as? String ?? "No Word").toPreferredChinese())
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                        
-                        Text(idiom.value(forKey: "pinyin") as? String ?? "No Pinyin")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                        
-                        Text((idiom.value(forKey: "explanation") as? String ?? "No Explanation").toPreferredChinese())
-                            .font(.body)
-                            .multilineTextAlignment(.center)
-                        
-                        if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
-                            Text("例子: \(example)".toPreferredChinese())
-                                .font(.subheadline)
-                                .italic()
-                                .foregroundColor(.blue)
-                        }
-                        
-                        if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
-                            Text("來源: \(derivation)".toPreferredChinese())
-                                .font(.subheadline)
-                                .foregroundColor(.green)
-                        }
-                    }
-                    .padding()
+            ScrollView {
+                VStack(spacing: 30) {
+                    // Header with gradient
+                    headerSection
                     
-                    Button(action: toggleLearned) {
-                        Image(systemName: isLearned ? "checkmark.circle.fill" : "circle")
-                            .font(.title)
-                            .foregroundColor(isLearned ? .green : .gray)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                } else {
-                    Text(LocalizationKeys.Learning.loadingDailyIdiom)
+                    // Daily idiom card
+                    dailyIdiomCard
+                    
+                    // Action buttons
+                    actionButtons
+                    
+                    // Daily review section
+                    dailyReviewSection
                 }
-                
-                Button("查看已學習成語".toPreferredChinese()) {
-                    showReview = true
-                }
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
-            .navigationTitle("每日一詞".toPreferredChinese())
-            .onAppear(perform: loadDailyIdiom)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
+            .navigationBarHidden(true)
+            .onAppear {
+                loadDailyIdiom()
+                loadReviewWords()
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    animateCard = true
+                }
+            }
             .sheet(isPresented: $showReview) {
                 ReviewView()
             }
         }
     }
+    
+    private var headerSection: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Image(systemName: "book.fill")
+                    .foregroundColor(.orange)
+                    .font(.title2)
+                
+                Text("每日一詞".toPreferredChinese())
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.blue, .purple]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                
+                Spacer()
+                
+                Button(action: {
+                    loadDailyIdiom()
+                    withAnimation(.spring()) {
+                        animateCard = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            animateCard = true
+                        }
+                    }
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .rotationEffect(.degrees(animateCard ? 360 : 0))
+                }
+            }
+            
+            Text("學習新成語，豐富你的詞彙！".toPreferredChinese())
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+        .padding(.top, 50)
+    }
+    
+    private var dailyIdiomCard: some View {
+        VStack {
+            if let idiom = dailyIdiom {
+                VStack(spacing: 20) {
+                    // Word and pinyin
+                    VStack(spacing: 8) {
+                        Text((idiom.value(forKey: "word") as? String ?? "No Word").toPreferredChinese())
+                            .font(.system(size: 32, weight: .bold, design: .serif))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [.primary, .blue]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                        
+                        Text(idiom.value(forKey: "pinyin") as? String ?? "No Pinyin")
+                            .font(.title3)
+                            .foregroundColor(.secondary)
+                            .italic()
+                    }
+                    
+                    // Explanation
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label {
+                            Text((idiom.value(forKey: "explanation") as? String ?? "No Explanation").toPreferredChinese())
+                                .font(.body)
+                                .multilineTextAlignment(.leading)
+                        } icon: {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundColor(.yellow)
+                        }
+                        
+                        if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
+                            Label {
+                                Text(example.toPreferredChinese())
+                                    .font(.subheadline)
+                                    .italic()
+                            } icon: {
+                                Image(systemName: "quote.bubble.fill")
+                                    .foregroundColor(.green)
+                            }
+                        }
+                        
+                        if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
+                            Label {
+                                Text(derivation.toPreferredChinese())
+                                    .font(.subheadline)
+                            } icon: {
+                                Image(systemName: "book.closed.fill")
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // Learn button
+                    Button(action: {
+                        withAnimation(.spring()) {
+                            toggleLearned()
+                            if !isLearned {
+                                showConfetti = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showConfetti = false
+                                }
+                            }
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: isLearned ? "checkmark.circle.fill" : "plus.circle.fill")
+                                .font(.title2)
+                            
+                            Text(isLearned ? "已學會" : "標記為已學會")
+                                .fontWeight(.semibold)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: isLearned ? [.green, .mint] : [.blue, .cyan]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .foregroundColor(.white)
+                        .cornerRadius(25)
+                        .scaleEffect(animateCard ? 1.0 : 0.8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(25)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                )
+                .scaleEffect(animateCard ? 1.0 : 0.9)
+                .opacity(animateCard ? 1.0 : 0.8)
+            } else {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    
+                    Text(LocalizationKeys.Learning.loadingDailyIdiom)
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(height: 200)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
+            }
+        }
+        .overlay(
+            showConfetti ? ConfettiView() : nil
+        )
+    }
+    
+    private var actionButtons: some View {
+        HStack(spacing: 20) {
+            Button("復習已學成語".toPreferredChinese()) {
+                showReview = true
+            }
+            .padding()
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [.purple, .pink]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .foregroundColor(.white)
+            .cornerRadius(15)
+            .shadow(color: .purple.opacity(0.3), radius: 5, x: 0, y: 3)
+        }
+    }
+    
+    private var dailyReviewSection: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            HStack {
+                Image(systemName: "clock.badge.checkmark.fill")
+                    .foregroundColor(.orange)
+                    .font(.title2)
+                
+                Text("今日複習".toPreferredChinese())
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                if !reviewWords.isEmpty {
+                    Text("\(reviewWords.count) 個成語")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(8)
+                }
+            }
+            
+            if reviewWords.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 50))
+                        .foregroundColor(.green)
+                    
+                    Text("太棒了！今天沒有需要複習的成語")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("繼續學習新的成語吧！")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(.green.opacity(0.1))
+                        .stroke(.green.opacity(0.3), lineWidth: 1)
+                )
+            } else {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    ForEach(reviewWords.prefix(6), id: \.objectID) { word in
+                        reviewWordCard(word: word)
+                    }
+                }
+                
+                if reviewWords.count > 6 {
+                    Button("查看更多 (\(reviewWords.count - 6))") {
+                        showReview = true
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+                    .padding(.top, 8)
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
+        )
+    }
+    
+    private func reviewWordCard(word: NSManagedObject) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text((word.value(forKey: "word") as? String ?? "").toPreferredChinese())
+                .font(.headline)
+                .fontWeight(.semibold)
+                .lineLimit(2)
+            
+            Text(word.value(forKey: "pinyin") as? String ?? "")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            
+            HStack {
+                Image(systemName: "arrow.clockwise")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                
+                Text("待複習")
+                    .font(.caption2)
+                    .foregroundColor(.orange)
+                    .fontWeight(.medium)
+                
+                Spacer()
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.orange.opacity(0.1))
+                .stroke(.orange.opacity(0.3), lineWidth: 1)
+        )
+        .onTapGesture {
+            // Handle review word tap - could navigate to detailed view
+        }
+    }
+    
     
     private func loadDailyIdiom() {
         let context = CoreDataManager.shared.context
@@ -96,6 +373,43 @@ struct LearningView: View {
             print("Failed to load daily idiom: \(error)")
         }
     }
+    
+    private func loadReviewWords() {
+        let context = CoreDataManager.shared.context
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Fetch UserData entries that are learned and due for review
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        userDataRequest.predicate = NSPredicate(format: "isLearned == %@ AND (nextReviewDate == nil OR nextReviewDate <= %@)", 
+                                               NSNumber(value: true), today as NSDate)
+        
+        do {
+            let userDataResults = try context.fetch(userDataRequest)
+            let words = userDataResults.compactMap { $0.value(forKey: "word") as? String }
+            
+            if !words.isEmpty {
+                // Fetch corresponding Chengyu entities
+                let chengyuRequest = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
+                chengyuRequest.predicate = NSPredicate(format: "word IN %@", words)
+                chengyuRequest.fetchLimit = 10 // Limit to 10 words for daily review
+                
+                reviewWords = try context.fetch(chengyuRequest)
+            } else {
+                reviewWords = []
+            }
+        } catch {
+            print("Failed to load review words: \(error)")
+            reviewWords = []
+        }
+    }
+    
+    private func getReviewInterval(for reviewCount: Int) -> TimeInterval {
+        // Spaced repetition intervals (in days)
+        let intervals: [TimeInterval] = [1, 3, 7, 14, 30, 90] // days
+        let dayIndex = min(reviewCount, intervals.count - 1)
+        return intervals[dayIndex] * 24 * 60 * 60 // convert to seconds
+    }
 
     private func getLearnedWords() -> [String] {
         let context = CoreDataManager.shared.context
@@ -119,15 +433,38 @@ struct LearningView: View {
         userDataRequest.predicate = NSPredicate(format: "word == %@", word)
         
         do {
+            let now = Date()
+            
             if let userData = try context.fetch(userDataRequest).first {
-                userData.setValue(!isLearned, forKey: "isLearned")
+                let wasLearned = userData.value(forKey: "isLearned") as? Bool ?? false
+                userData.setValue(!wasLearned, forKey: "isLearned")
+                
+                if !wasLearned {
+                    // First time learning - set initial review date
+                    userData.setValue(now, forKey: "lastReviewDate")
+                    let reviewCount = userData.value(forKey: "reviewCount") as? Int32 ?? 0
+                    let nextReviewInterval = getReviewInterval(for: Int(reviewCount))
+                    userData.setValue(now.addingTimeInterval(nextReviewInterval), forKey: "nextReviewDate")
+                    userData.setValue(reviewCount + 1, forKey: "reviewCount")
+                } else {
+                    // Unlearning - reset review data
+                    userData.setValue(nil, forKey: "lastReviewDate")
+                    userData.setValue(nil, forKey: "nextReviewDate")
+                    userData.setValue(0, forKey: "reviewCount")
+                }
             } else {
+                // Create new UserData entry
                 let userData = NSEntityDescription.insertNewObject(forEntityName: "UserData", into: context)
                 userData.setValue(word, forKey: "word")
                 userData.setValue(true, forKey: "isLearned")
+                userData.setValue(now, forKey: "lastReviewDate")
+                userData.setValue(now.addingTimeInterval(getReviewInterval(for: 0)), forKey: "nextReviewDate")
+                userData.setValue(1, forKey: "reviewCount")
             }
+            
             CoreDataManager.shared.saveContext()
             isLearned.toggle()
+            loadReviewWords() // Refresh review words
         } catch {
             print("Failed to toggle learned: \(error)")
         }

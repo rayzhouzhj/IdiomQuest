@@ -10,6 +10,9 @@
     </entity>
     <entity name="UserData" representedClassName="UserData" syncable="YES" codeGenerationType="class">
         <attribute name="isLearned" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="lastReviewDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="nextReviewDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="reviewCount" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="word" attributeType="String"/>
     </entity>
 </model>

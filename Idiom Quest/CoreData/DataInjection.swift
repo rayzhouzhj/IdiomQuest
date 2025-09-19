@@ -123,18 +123,18 @@ func testDatabase() {
         let word = idiom?.value(forKey: "word") as? String ?? "None"
         print("Test idiom: \(word)")
         
-        // Check or create UserData
-        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
-        userDataRequest.predicate = NSPredicate(format: "word == %@", word)
-        if let userData = try context.fetch(userDataRequest).first {
-            print("UserData isLearned: \(userData.value(forKey: "isLearned") ?? false)")
-        } else {
-            let userData = NSEntityDescription.insertNewObject(forEntityName: "UserData", into: context)
-            userData.setValue(word, forKey: "word")
-            userData.setValue(true, forKey: "isLearned")
-            try context.save()
-            print("Created UserData for \(word)")
-        }
+//        // Check or create UserData
+//        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+//        userDataRequest.predicate = NSPredicate(format: "word == %@", word)
+//        if let userData = try context.fetch(userDataRequest).first {
+//            print("UserData isLearned: \(userData.value(forKey: "isLearned") ?? false)")
+//        } else {
+//            let userData = NSEntityDescription.insertNewObject(forEntityName: "UserData", into: context)
+//            userData.setValue(word, forKey: "word")
+//            userData.setValue(true, forKey: "isLearned")
+//            try context.save()
+//            print("Created UserData for \(word)")
+//        }
     } catch {
         print("Fetch error: \(error)")
     }
@@ -144,7 +144,7 @@ func testDatabase() {
 //struct ConvertIdioms {
 //    static func main() {
 //        let jsonFilePath = "/Users/rayzhou/Downloads/idiom.json" // Update with your JSON file path
-//        let modelName = "IdiomQuest" // Match .xcdatamodeld name
+//        let modelName = "Idiom_Quest" // Match .xcdatamodeld name
 //        let outputSQLitePath = "/Users/rayzhou/Downloads/ChengyuData.sqlite" // Update with desired output path
 //        let modelURL: URL? = nil // Set to .momd path if running standalone
 //        
