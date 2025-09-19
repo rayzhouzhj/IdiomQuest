@@ -8,6 +8,18 @@
 import Foundation
 import CoreFoundation
 
+// MARK: - Localization Configuration
+struct LocalizationConfig {
+    static var autoLocalizeEnabled: Bool = true
+    static var preferredVariant: ChineseVariant = .auto
+    
+    enum ChineseVariant {
+        case auto
+        case traditional
+        case simplified
+    }
+}
+
 extension String {
     func toTraditionalChinese() -> String {
         let mutableString = NSMutableString(string: self) as CFMutableString
@@ -22,13 +34,25 @@ extension String {
     }
     
     func toPreferredChinese() -> String {
-        let preferredLanguage = Locale.preferredLanguages.first ?? "zh-Hans"
+        guard LocalizationConfig.autoLocalizeEnabled else { return self }
         
-        let traditionalLocales = ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "yue-Hant-HK", "yue-Hant-MO"]
-        if traditionalLocales.contains(where: preferredLanguage.contains) {
+        switch LocalizationConfig.preferredVariant {
+        case .traditional:
             return self.toTraditionalChinese()
+        case .simplified:
+            return self.toSimplifiedChinese()
+        case .auto:
+            let preferredLanguage = Locale.preferredLanguages.first ?? "zh-Hans"
+            let traditionalLocales = ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "yue-Hant-HK", "yue-Hant-MO"]
+            if traditionalLocales.contains(where: preferredLanguage.contains) {
+                return self.toTraditionalChinese()
+            }
+            return self
         }
-        
-        return self
+    }
+    
+    /// Convenience property for automatic localization
+    var localized: String {
+        return self.toPreferredChinese()
     }
 }

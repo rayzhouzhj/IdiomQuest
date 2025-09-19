@@ -72,19 +72,19 @@ struct GameView: View {
                     // Score, Round, and Countdown at top
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("Round: \(currentRound)")
+                            LocalizedText("Round: \(currentRound)")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
                                 .shadow(color: .black.opacity(0.5), radius: 2)
                             if roundActive {
-                                Text("Time: \(roundTimeRemaining)s")
+                                LocalizedText("Time: \(roundTimeRemaining)s")
                                     .font(.subheadline)
                                     .foregroundColor(.yellow)
                                     .shadow(color: .black.opacity(0.5), radius: 1)
                             }
                         }
                         Spacer()
-                        Text("Score: \(score)")
+                        LocalizedText("Score: \(score)")
                             .font(.title2.bold())
                             .foregroundColor(.white)
                             .shadow(color: .black.opacity(0.5), radius: 2)
@@ -98,7 +98,7 @@ struct GameView: View {
                     .padding(.horizontal)
                     
                     if roundActive && balloons.count == 0 {
-                        Text("Round Complete! Starting next...")
+                        LocalizedText("Round Complete! Starting next...")
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding()
@@ -112,7 +112,7 @@ struct GameView: View {
                     Spacer()
                     
                     // Tips at bottom
-                    Text("Tip: Tap the balloon with the correct answer to score +10! Wrong answers deduct 5 points.")
+                    LocalizedText("Tip: Tap the balloon with the correct answer to score +10! Wrong answers deduct 5 points.")
                         .font(.subheadline.bold())
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
@@ -287,10 +287,10 @@ struct GameView: View {
 //    
 //    var body: some View {
 //        VStack(spacing: 20) {
-//            Text("Score: \(score)")
+//            LocalizedText("Score: \(score)")
 //                .font(.title)
 //            
-//            Text("Time: \(timeLeft)")
+//            LocalizedText("Time: \(timeLeft)")
 //                .font(.title)
 //                .foregroundColor(timeLeft <= 10 ? .red : .primary)
 //            
@@ -333,7 +333,7 @@ struct GameView: View {
 //                startGame()
 //            }
 //        } message: {
-//            Text("Final Score: \(score)\nHigh Score: \(highScore)")
+//            LocalizedText("Final Score: \(score)\nHigh Score: \(highScore)")
 //        }
 //    }
 //    

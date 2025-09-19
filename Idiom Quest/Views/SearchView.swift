@@ -79,7 +79,7 @@ struct SearchView: View {
                     }
                 }
             } message: {
-                Text("確定要刪除這個搜尋記錄嗎？")
+                LocalizedText("確定要刪除這個搜尋記錄嗎？")
             }
         }
     }
@@ -95,7 +95,7 @@ struct SearchView: View {
             Spacer()
             
             VStack {
-                Text("搜尋成語".toPreferredChinese())
+                LocalizedText("搜尋成語".toPreferredChinese())
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundStyle(
@@ -107,11 +107,11 @@ struct SearchView: View {
                     )
                 
                 if selectedTab == .results && !searchResults.isEmpty {
-                    Text("找到 \(searchResults.count) 個結果")
+                    LocalizedText("找到 \(searchResults.count) 個結果")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 } else if selectedTab == .history && !searchHistory.isEmpty {
-                    Text("\(searchHistory.count) 個搜尋記錄")
+                    LocalizedText("\(searchHistory.count) 個搜尋記錄")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -221,7 +221,7 @@ struct SearchView: View {
                 VStack {
                     ProgressView()
                         .scaleEffect(1.2)
-                    Text("搜尋中...")
+                    LocalizedText("搜尋中...")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .padding(.top, 8)
@@ -257,10 +257,10 @@ struct SearchView: View {
                         .foregroundColor(.gray.opacity(0.6))
                     
                     VStack(spacing: 8) {
-                        Text("還沒有搜尋記錄")
+                        LocalizedText("還沒有搜尋記錄")
                             .font(.headline)
                         
-                        Text("開始搜尋你感興趣的成語吧！")
+                        LocalizedText("開始搜尋你感興趣的成語吧！")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -288,10 +288,10 @@ struct SearchView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("找不到相關成語")
+                LocalizedText("找不到相關成語")
                     .font(.headline)
                 
-                Text("嘗試其他關鍵字或檢查拼寫")
+                LocalizedText("嘗試其他關鍵字或檢查拼寫")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -308,10 +308,10 @@ struct SearchView: View {
                 .foregroundColor(.blue.opacity(0.7))
             
             VStack(spacing: 8) {
-                Text("開始搜尋成語")
+                LocalizedText("開始搜尋成語")
                     .font(.headline)
                 
-                Text("在上方輸入關鍵字來搜尋成語")
+                LocalizedText("在上方輸入關鍵字來搜尋成語")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -421,7 +421,7 @@ struct SearchView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("「\(historyItem.searchQuery)」")
+                    LocalizedText("「\(historyItem.searchQuery)」")
                         .font(.headline)
                         .foregroundColor(.primary)
                     
@@ -454,7 +454,7 @@ struct SearchView: View {
                 }
             }
             
-            Text("找到 \(historyItem.results.count) 個結果")
+            LocalizedText("找到 \(historyItem.results.count) 個結果")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             
@@ -472,7 +472,7 @@ struct SearchView: View {
                         }
                         
                         if historyItem.results.count > 3 {
-                            Text("...")
+                            LocalizedText("...")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }

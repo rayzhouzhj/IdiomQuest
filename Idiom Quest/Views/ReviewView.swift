@@ -117,7 +117,7 @@ struct ReviewView: View {
                 Spacer()
                 
                 VStack {
-                    Text("已學成語".toPreferredChinese())
+                    LocalizedText("已學成語".toPreferredChinese())
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(
@@ -128,7 +128,7 @@ struct ReviewView: View {
                             )
                         )
                     
-                    Text("\(learnedIdioms.count) 個成語")
+                    LocalizedText("\(learnedIdioms.count) 個成語")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -277,7 +277,7 @@ struct ReviewView: View {
                             .font(.title2)
                             .foregroundColor(.orange)
                         
-                        Text("待複習")
+                        LocalizedText("待複習")
                             .font(.caption2)
                             .foregroundColor(.orange)
                             .fontWeight(.medium)
@@ -286,7 +286,7 @@ struct ReviewView: View {
                             .font(.title2)
                             .foregroundColor(.green)
                         
-                        Text("已掌握")
+                        LocalizedText("已掌握")
                             .font(.caption2)
                             .foregroundColor(.green)
                             .fontWeight(.medium)
@@ -320,14 +320,14 @@ struct ReviewView: View {
                         .foregroundColor(.gray)
                         .font(.caption)
                     
-                    Text("上次複習: \(formatDate(lastReview))")
+                    LocalizedText("上次複習: \(formatDate(lastReview))")
                         .font(.caption)
                         .foregroundColor(.gray)
                     
                     Spacer()
                     
                     let reviewCount = getReviewCount(for: word)
-                    Text("複習 \(reviewCount) 次")
+                    LocalizedText("複習 \(reviewCount) 次")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }

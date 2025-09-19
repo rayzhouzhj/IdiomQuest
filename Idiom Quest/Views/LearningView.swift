@@ -69,7 +69,7 @@ struct LearningView: View {
                     .foregroundColor(.orange)
                     .font(.title2)
                 
-                Text("每日一詞".toPreferredChinese())
+                LocalizedText("每日一詞".toPreferredChinese())
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(
@@ -89,7 +89,7 @@ struct LearningView: View {
                 }
             }
             
-            Text("學習新成語，豐富你的詞彙！".toPreferredChinese())
+            LocalizedText("學習新成語，豐富你的詞彙！".toPreferredChinese())
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -243,14 +243,14 @@ struct LearningView: View {
                     .foregroundColor(.orange)
                     .font(.title2)
                 
-                Text("今日複習".toPreferredChinese())
+                LocalizedText("今日複習".toPreferredChinese())
                     .font(.title2)
                     .fontWeight(.bold)
                 
                 Spacer()
                 
                 if !reviewWords.isEmpty {
-                    Text("\(reviewWords.count) 個成語")
+                    LocalizedText("\(reviewWords.count) 個成語")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -265,11 +265,11 @@ struct LearningView: View {
                         .font(.system(size: 50))
                         .foregroundColor(.green)
                     
-                    Text("太棒了！今天沒有需要複習的成語")
+                    LocalizedText("太棒了！今天沒有需要複習的成語")
                         .font(.headline)
                         .multilineTextAlignment(.center)
                     
-                    Text("繼續學習新的成語吧！")
+                    LocalizedText("繼續學習新的成語吧！")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -325,7 +325,7 @@ struct LearningView: View {
                     .font(.caption)
                     .foregroundColor(.orange)
                 
-                Text("待複習")
+                LocalizedText("待複習")
                     .font(.caption2)
                     .foregroundColor(.orange)
                     .fontWeight(.medium)
