@@ -103,34 +103,178 @@ struct GameView: View {
     // MARK: - Background View
     private var backgroundView: some View {
         ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.blue.opacity(0.8),
-                    Color.cyan.opacity(0.6),
-                    Color.white.opacity(0.4)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            skyGradient
+            atmosphericOverlay
+            backgroundClouds
+            foregroundClouds
+            floatingParticles
+        }
+    }
+    
+    // MARK: - Background Components
+    private var skyGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(red: 0.4, green: 0.7, blue: 1.0), // Bright sky blue
+                Color(red: 0.3, green: 0.8, blue: 1.0), // Lighter blue
+                Color(red: 0.7, green: 0.9, blue: 1.0), // Very light blue
+                Color(red: 0.9, green: 0.95, blue: 1.0) // Almost white
+            ]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+    
+    private var atmosphericOverlay: some View {
+        RadialGradient(
+            gradient: Gradient(colors: [
+                Color.white.opacity(0.1),
+                Color.clear
+            ]),
+            center: .topTrailing,
+            startRadius: 50,
+            endRadius: 300
+        )
+        .ignoresSafeArea()
+    }
+    
+    private var backgroundClouds: some View {
+        ForEach(0..<3) { i in
+            cloudShape(size: .large, opacity: 0.25)
+                .offset(
+                    x: CGFloat(i * 150) - 100,
+                    y: 60 + CGFloat(i * 30)
+                )
+        }
+    }
+    
+    private var foregroundClouds: some View {
+        ForEach(0..<4) { i in
+            cloudShape(size: .medium, opacity: 0.35)
+                .offset(
+                    x: CGFloat(i * 100) - 50,
+                    y: 120 + CGFloat(i * 40)
+                )
+        }
+    }
+    
+    // MARK: - Cloud Shape Helper
+    private func cloudShape(size: CloudSize, opacity: Double) -> some View {
+        ZStack {
+            // Main cloud body
+            Circle()
+                .fill(.white.opacity(opacity))
+                .frame(width: size.mainSize, height: size.mainSize)
             
-            // Animated clouds
-            ForEach(0..<4) { i in
-                Ellipse()
-                    .fill(.white.opacity(0.3))
-                    .frame(
-                        width: CGFloat.random(in: 80...150),
-                        height: CGFloat.random(in: 30...50)
-                    )
-                    .offset(
-                        x: CGFloat(i * 100) + sin(Date().timeIntervalSince1970 * 0.3 + Double(i)) * 30,
-                        y: 80 + CGFloat(i * 40)
-                    )
-                    .animation(
-                        .linear(duration: 25).repeatForever(autoreverses: false),
-                        value: Date().timeIntervalSince1970
-                    )
+            // Left puff
+            Circle()
+                .fill(.white.opacity(opacity * 0.8))
+                .frame(width: size.puffSize, height: size.puffSize)
+                .offset(x: -size.offset, y: size.verticalOffset)
+            
+            // Right puff
+            Circle()
+                .fill(.white.opacity(opacity * 0.8))
+                .frame(width: size.puffSize, height: size.puffSize)
+                .offset(x: size.offset, y: size.verticalOffset)
+            
+            // Top puff
+            Circle()
+                .fill(.white.opacity(opacity * 0.9))
+                .frame(width: size.topSize, height: size.topSize)
+                .offset(x: 0, y: -size.topOffset)
+            
+            // Small decorative puffs
+            Circle()
+                .fill(.white.opacity(opacity * 0.6))
+                .frame(width: size.smallSize, height: size.smallSize)
+                .offset(x: size.smallOffset, y: -size.smallVertical)
+            
+            Circle()
+                .fill(.white.opacity(opacity * 0.6))
+                .frame(width: size.smallSize, height: size.smallSize)
+                .offset(x: -size.smallOffset * 0.7, y: size.smallVertical)
+        }
+    }
+    
+    // MARK: - Cloud Size Configuration
+    enum CloudSize {
+        case large, medium
+        
+        var mainSize: CGFloat {
+            switch self {
+            case .large: return 80
+            case .medium: return 60
             }
+        }
+        
+        var puffSize: CGFloat {
+            switch self {
+            case .large: return 65
+            case .medium: return 45
+            }
+        }
+        
+        var topSize: CGFloat {
+            switch self {
+            case .large: return 55
+            case .medium: return 40
+            }
+        }
+        
+        var smallSize: CGFloat {
+            switch self {
+            case .large: return 25
+            case .medium: return 20
+            }
+        }
+        
+        var offset: CGFloat {
+            switch self {
+            case .large: return 35
+            case .medium: return 25
+            }
+        }
+        
+        var verticalOffset: CGFloat {
+            switch self {
+            case .large: return 8
+            case .medium: return 6
+            }
+        }
+        
+        var topOffset: CGFloat {
+            switch self {
+            case .large: return 25
+            case .medium: return 18
+            }
+        }
+        
+        var smallOffset: CGFloat {
+            switch self {
+            case .large: return 50
+            case .medium: return 35
+            }
+        }
+        
+        var smallVertical: CGFloat {
+            switch self {
+            case .large: return 15
+            case .medium: return 12
+            }
+        }
+    }
+    
+    private var floatingParticles: some View {
+        ForEach(0..<6) { i in
+            Circle()
+                .fill(.white.opacity(0.6))
+                .frame(width: 4)
+                .offset(
+                    x: CGFloat(i * 60) - 150,
+                    y: CGFloat(200 + i * 50)
+                )
         }
     }
     
