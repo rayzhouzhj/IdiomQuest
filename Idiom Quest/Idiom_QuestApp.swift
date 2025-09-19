@@ -17,7 +17,7 @@ class AppState: ObservableObject {
 struct IdiomQuestApp: App {
     let coreDataManager = CoreDataManager.shared
     @StateObject private var appState = AppState()
-    @State private var selectedTab = 1 // Game tab (0: Learning, 1: Game, 2: Review)
+    @State private var selectedTab = 0 // Game tab (0: Learning, 1: Game, 2: Review)
     
     init() {
         coreDataManager.initializeUserData()

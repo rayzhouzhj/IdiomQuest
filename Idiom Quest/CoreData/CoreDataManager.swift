@@ -29,7 +29,7 @@ class CoreDataManager: ObservableObject {
         let chengyuDescription = NSPersistentStoreDescription(url: chengyuStoreURL)
         chengyuDescription.type = NSSQLiteStoreType
         chengyuDescription.isReadOnly = true
-        chengyuDescription.configuration = "ChengyuConfig"
+        // Removed configuration reference that doesn't exist in model
         
         // Writable store: UserData.sqlite
         let fileManager = FileManager.default
@@ -37,7 +37,7 @@ class CoreDataManager: ObservableObject {
         let userDataStoreURL = documentsURL.appendingPathComponent("UserData.sqlite")
         let userDataDescription = NSPersistentStoreDescription(url: userDataStoreURL)
         userDataDescription.type = NSSQLiteStoreType
-        userDataDescription.configuration = "UserDataConfig"
+        // Removed configuration reference that doesn't exist in model
         userDataDescription.shouldMigrateStoreAutomatically = true
         userDataDescription.shouldInferMappingModelAutomatically = true
         
@@ -57,12 +57,32 @@ class CoreDataManager: ObservableObject {
         
         persistentContainer.persistentStoreDescriptions = [chengyuDescription, userDataDescription]
         
-        persistentContainer.loadPersistentStores { _, error in
+        persistentContainer.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
-                print("Error details: \(error), \(error.userInfo)")
-                fatalError("Failed to load Core Data store: \(error), \(error.userInfo)")
+                print("Error loading store at \(storeDescription.url?.path ?? "unknown"): \(error), \(error.userInfo)")
+                
+                // If this is the UserData store and it has corruption, try to recreate it
+                if let url = storeDescription.url, url.lastPathComponent == "UserData.sqlite" {
+                    print("Attempting to recreate corrupted UserData store...")
+                    do {
+                        try FileManager.default.removeItem(at: url)
+                        // Try to reload just this store
+                        self.persistentContainer.loadPersistentStores { _, retryError in
+                            if let retryError = retryError {
+                                fatalError("Failed to recreate UserData store: \(retryError)")
+                            }
+                            print("Successfully recreated UserData store")
+                        }
+                    } catch {
+                        print("Failed to remove corrupted UserData store: \(error)")
+//                        fatalError("Failed to load Core Data store: \(error), \(error.userInfo)")
+                    }
+                } else {
+                    fatalError("Failed to load Core Data store: \(error), \(error.userInfo)")
+                }
+            } else {
+                print("Successfully loaded store: \(storeDescription.url?.path ?? "unknown")")
             }
-            print("Successfully loaded Core Data stores")
         }
         
         // Initialize UserData in background

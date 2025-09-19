@@ -201,7 +201,7 @@ struct BalloonView: View {
         }
         
         // Add some smaller debris
-        for i in 0..<5 {
+        for _ in 0..<5 {
             let angle = Double.random(in: 0...(2 * .pi))
             let velocity = CGPoint(
                 x: cos(angle) * Double.random(in: 0.8...1.5),

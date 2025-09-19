@@ -49,9 +49,15 @@ struct LearningView: View {
             .onAppear {
                 loadDailyIdiom()
                 loadReviewWords()
+                debugUserData() // Add debugging
                 withAnimation(.easeInOut(duration: 0.8)) {
                     animateCard = true
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                // Refresh data when app comes to foreground
+                loadDailyIdiom()
+                loadReviewWords()
             }
             .sheet(isPresented: $showReview) {
                 ReviewView()
@@ -353,6 +359,10 @@ struct LearningView: View {
     
     private func loadDailyIdiom() {
         let context = CoreDataManager.shared.context
+        
+        // Refresh the context to ensure we have the latest data
+        context.refreshAllObjects()
+        
         let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
         request.fetchLimit = 1
         
@@ -369,6 +379,7 @@ struct LearningView: View {
             // Update learned status
             if let word = dailyIdiom?.value(forKey: "word") as? String {
                 isLearned = getLearnedStatus(for: word)
+                print("Daily idiom '\(word)' loaded with learned status: \(isLearned)")
             }
         } catch {
             print("Failed to load daily idiom: \(error)")
@@ -439,6 +450,7 @@ struct LearningView: View {
             if let userData = try context.fetch(userDataRequest).first {
                 let wasLearned = userData.value(forKey: "isLearned") as? Bool ?? false
                 userData.setValue(!wasLearned, forKey: "isLearned")
+                print("Toggling learned status for '\(word)': \(wasLearned) -> \(!wasLearned)")
                 
                 if !wasLearned {
                     // First time learning - set initial review date
@@ -447,11 +459,13 @@ struct LearningView: View {
                     let nextReviewInterval = getReviewInterval(for: Int(reviewCount))
                     userData.setValue(now.addingTimeInterval(nextReviewInterval), forKey: "nextReviewDate")
                     userData.setValue(reviewCount + 1, forKey: "reviewCount")
+                    print("Set initial review data for '\(word)'")
                 } else {
                     // Unlearning - reset review data
                     userData.setValue(nil, forKey: "lastReviewDate")
                     userData.setValue(nil, forKey: "nextReviewDate")
                     userData.setValue(0, forKey: "reviewCount")
+                    print("Reset review data for '\(word)'")
                 }
             } else {
                 // Create new UserData entry
@@ -461,9 +475,20 @@ struct LearningView: View {
                 userData.setValue(now, forKey: "lastReviewDate")
                 userData.setValue(now.addingTimeInterval(getReviewInterval(for: 0)), forKey: "nextReviewDate")
                 userData.setValue(1, forKey: "reviewCount")
+                print("Created new UserData entry for '\(word)' with learned=true")
             }
             
             CoreDataManager.shared.saveContext()
+            print("Core Data context saved for word: '\(word)'")
+            
+            // Verify the save worked
+            let verifyRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+            verifyRequest.predicate = NSPredicate(format: "word == %@", word)
+            if let verifyData = try context.fetch(verifyRequest).first {
+                let savedStatus = verifyData.value(forKey: "isLearned") as? Bool ?? false
+                print("Verified saved status for '\(word)': \(savedStatus)")
+            }
+            
             isLearned.toggle()
             loadReviewWords() // Refresh review words
         } catch {
@@ -477,12 +502,44 @@ struct LearningView: View {
         userDataRequest.predicate = NSPredicate(format: "word == %@", word)
         
         do {
-            if let userData = try context.fetch(userDataRequest).first {
-                return userData.value(forKey: "isLearned") as? Bool ?? false
+            let results = try context.fetch(userDataRequest)
+            print("Found \(results.count) UserData entries for word: \(word)")
+            
+            if let userData = results.first {
+                let learned = userData.value(forKey: "isLearned") as? Bool ?? false
+                print("Word '\(word)' learned status: \(learned)")
+                return learned
+            } else {
+                print("No UserData found for word: \(word)")
             }
         } catch {
-            print("Failed to get learned status: \(error)")
+            print("Failed to get learned status for word '\(word)': \(error)")
         }
         return false
+    }
+    
+    private func debugUserData() {
+        let context = CoreDataManager.shared.context
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        
+        do {
+            let allUserData = try context.fetch(userDataRequest)
+            print("=== DEBUG: Total UserData entries: \(allUserData.count) ===")
+            
+            for userData in allUserData {
+                let word = userData.value(forKey: "word") as? String ?? "Unknown"
+                let learned = userData.value(forKey: "isLearned") as? Bool ?? false
+                print("UserData: '\(word)' - learned: \(learned)")
+            }
+            
+            // Check if any entries are marked as learned
+            let learnedRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+            learnedRequest.predicate = NSPredicate(format: "isLearned == %@", NSNumber(value: true))
+            let learnedEntries = try context.fetch(learnedRequest)
+            print("=== Learned entries count: \(learnedEntries.count) ===")
+            
+        } catch {
+            print("Failed to debug UserData: \(error)")
+        }
     }
 }
