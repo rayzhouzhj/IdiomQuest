@@ -157,7 +157,7 @@ struct LearningView: View {
                     Button(action: {
                         withAnimation(.spring()) {
                             toggleLearned()
-                            if !isLearned {
+                            if isLearned {
                                 showConfetti = true
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                                     showConfetti = false
