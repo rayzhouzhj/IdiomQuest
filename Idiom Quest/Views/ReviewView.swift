@@ -16,14 +16,14 @@ struct ReviewView: View {
         NavigationView {
             List(learnedIdioms, id: \.self) { idiom in
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(idiom.value(forKey: "word") as? String ?? "No Word")
+                    Text((idiom.value(forKey: "word") as? String ?? "No Word").toPreferredChinese())
                         .font(.headline)
                     
                     Text(idiom.value(forKey: "pinyin") as? String ?? "No Pinyin")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
-                    Text(idiom.value(forKey: "explanation") as? String ?? "No Explanation")
+                    Text((idiom.value(forKey: "explanation") as? String ?? "No Explanation").toPreferredChinese())
                         .font(.body)
                 }
             }
