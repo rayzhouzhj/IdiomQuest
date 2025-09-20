@@ -948,7 +948,16 @@ struct GameView: View {
             // Single row layout with alternating heights (low-high-low-high)
             let isHigh = i % 2 == 1  // Odd indices (1, 3) are high
             
-            let xPos = screenWidth * (0.15 + CGFloat(i) * 0.18) + CGFloat.random(in: -15...15)
+            // Better spacing calculation for 4 balloons across screen width
+            // Total usable width: 80% of screen (10% margin on each side)
+            // Gap between balloons: 20% of usable width divided by 3 gaps
+            let leftMargin: CGFloat = 0.1  // 10% left margin
+            let rightMargin: CGFloat = 0.1  // 10% right margin
+            let usableWidth: CGFloat = 1.0 - leftMargin - rightMargin  // 80% usable
+            let gapWidth: CGFloat = usableWidth / CGFloat(balloonsPerRound - 1)  // Equal spacing
+            
+            let xPos = screenWidth * (leftMargin + CGFloat(i) * gapWidth) + CGFloat.random(in: -10...10)
+            
             // Adjusted Y positions to avoid gameHUD overlap
             // High balloons: 20% from top (below HUD + spacing)
             // Low balloons: 45% from top (well below HUD)
