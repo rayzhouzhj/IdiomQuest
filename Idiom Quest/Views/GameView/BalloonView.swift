@@ -21,6 +21,9 @@ struct BalloonView: View {
     @State private var showExplosion: Bool = false
     @State private var explosionParticles: [ExplosionParticle] = []
     @State private var showPopText: Bool = false
+    @State private var bobbingOffset: CGFloat = 0
+    @State private var breathingScale: CGFloat = 1.0
+    @State private var gentleRotation: Double = 0
     
     // Explosion Particle for BalloonView
     private struct ExplosionParticle: Identifiable {
@@ -33,74 +36,211 @@ struct BalloonView: View {
 
     var body: some View {
         ZStack {
-            // Simplified balloon body with better performance
+            // Enhanced balloon body with realistic depth
             ZStack {
+                // Main balloon body with enhanced gradient
                 Ellipse()
                     .fill(
                         RadialGradient(
                             colors: [
-                                balloon.color.opacity(0.9),
-                                balloon.color.opacity(0.7),
-                                balloon.color.opacity(0.5)
+                                balloon.color.opacity(0.95),          // Bright center
+                                balloon.color.opacity(0.85),          // Mid tone
+                                balloon.color.opacity(0.7),           // Darker edge
+                                balloon.color.opacity(0.5)            // Darkest rim
                             ],
-                            center: UnitPoint(x: 0.5, y: 0.3),
-                            startRadius: 10,
-                            endRadius: balloon.size.width * 0.6
+                            center: UnitPoint(x: 0.4, y: 0.25),       // Off-center for 3D effect
+                            startRadius: 5,
+                            endRadius: balloon.size.width * 0.7
                         )
                     )
+                    .overlay(
+                        // Secondary gradient for depth
+                        Ellipse()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        .clear,
+                                        balloon.color.opacity(0.2),
+                                        balloon.color.opacity(0.4)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
                     .frame(width: balloon.size.width, height: balloon.size.height)
-                    .scaleEffect(scale)
+                    .scaleEffect(scale * breathingScale)
                     .opacity(opacity)
-                    .rotationEffect(.degrees(tiltAngle))
-                    .shadow(color: balloon.color.opacity(0.3), radius: 8, x: 2, y: 4)
-                    .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset)
+                    .rotationEffect(.degrees(tiltAngle + gentleRotation))
+                    .shadow(color: balloon.color.opacity(0.4), radius: 12, x: 3, y: 6)
+                    .shadow(color: .black.opacity(0.2), radius: 20, x: 5, y: 10) // Additional soft shadow
+                    .position(
+                        x: balloon.xPosition + balloon.xOffset, 
+                        y: balloon.yOffset + bobbingOffset
+                    )
                     .onAppear {
-                        tiltAngle = Double.random(in: -3...3)  // Reduced range for smoother animation
+                        tiltAngle = Double.random(in: -3...3)
+                        startIdleAnimations()
                     }
                 
-                // Simplified shine effect
-                Circle()
-                    .fill(.white.opacity(0.4))
-                    .frame(width: balloon.size.width * 0.3, height: balloon.size.height * 0.3)
+                // Realistic balloon mouth/tie at bottom
+                Ellipse()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                balloon.color.opacity(0.8),
+                                balloon.color.opacity(0.6),
+                                balloon.color.opacity(0.4)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: balloon.size.width * 0.15, height: balloon.size.height * 0.08)
                     .position(
-                        x: balloon.xPosition + balloon.xOffset - balloon.size.width * 0.15,
-                        y: balloon.yOffset - balloon.size.height * 0.15
+                        x: balloon.xPosition + balloon.xOffset,
+                        y: balloon.yOffset + balloon.size.height / 2 - 2 + bobbingOffset
+                    )
+                    .scaleEffect(scale * breathingScale)
+                    .opacity(opacity)
+                    .rotationEffect(.degrees(tiltAngle + gentleRotation))
+                
+                // Enhanced primary shine effect
+                Ellipse()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                .white.opacity(0.7),
+                                .white.opacity(0.3),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 2,
+                            endRadius: balloon.size.width * 0.2
+                        )
+                    )
+                    .frame(width: balloon.size.width * 0.25, height: balloon.size.height * 0.35)
+                    .position(
+                        x: balloon.xPosition + balloon.xOffset - balloon.size.width * 0.12,
+                        y: balloon.yOffset - balloon.size.height * 0.18 + bobbingOffset
                     )
                     .opacity(opacity)
-                    .scaleEffect(scale)
+                    .scaleEffect(scale * breathingScale)
+                    .rotationEffect(.degrees(tiltAngle + gentleRotation))
+                
+                // Secondary smaller shine
+                Circle()
+                    .fill(.white.opacity(0.5))
+                    .frame(width: balloon.size.width * 0.12, height: balloon.size.height * 0.12)
+                    .position(
+                        x: balloon.xPosition + balloon.xOffset + balloon.size.width * 0.08,
+                        y: balloon.yOffset - balloon.size.height * 0.05 + bobbingOffset
+                    )
+                    .opacity(opacity)
+                    .scaleEffect(scale * breathingScale)
+                    .rotationEffect(.degrees(tiltAngle + gentleRotation))
             }
             
-            // Simplified string
-            SimplifiedStringView(
-                startPoint: CGPoint(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2),
-                endPoint: CGPoint(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 80),
+            // Enhanced curvy string
+            CurvyStringView(
+                startPoint: CGPoint(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + bobbingOffset),
+                endPoint: CGPoint(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 70 + bobbingOffset),
                 animationOffset: animationOffset
             )
             
-            // Simplified knot
-            Circle()
-                .fill(Color.brown.opacity(0.8))
-                .frame(width: 6, height: 6)
-                .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 80)
-                .opacity(opacity)
-                .scaleEffect(scale)
+            // Enhanced knot with realistic 3D design
+            ZStack {
+                // Knot shadow base
+                Circle()
+                    .fill(Color.black.opacity(0.3))
+                    .frame(width: 10, height: 10)
+                    .offset(x: 1, y: 1)
+                
+                // Main knot body
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.brown.opacity(0.95),
+                                Color.brown.opacity(0.75),
+                                Color.brown.opacity(0.55),
+                                Color.brown.opacity(0.35)
+                            ],
+                            center: UnitPoint(x: 0.3, y: 0.3),
+                            startRadius: 1,
+                            endRadius: 5
+                        )
+                    )
+                    .frame(width: 9, height: 9)
+                
+                // Knot highlight
+                Circle()
+                    .fill(.white.opacity(0.4))
+                    .frame(width: 3, height: 3)
+                    .offset(x: -1, y: -1)
+            }
+            .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 70 + bobbingOffset)
+            .opacity(opacity)
+            .scaleEffect(scale)
             
-            // Word display under the string (optimized)
+            // Enhanced word display with premium styling
             Text(balloon.answer.text.localized)
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
                 .frame(minWidth: 60, alignment: .center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.white)
-                        .shadow(color: .black.opacity(0.15), radius: 3, x: 0, y: 2)
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    .white,
+                                    Color.gray.opacity(0.05),
+                                    Color.gray.opacity(0.1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 3)
+                        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            .white.opacity(0.8),
+                                            .clear,
+                                            Color.gray.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                        .overlay(
+                            // Enhanced connection line to knot
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.gray.opacity(0.7),
+                                            Color.gray.opacity(0.4)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: 1.5, height: 10)
+                                .offset(y: -14)
+                        )
                 )
-                .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 110)
+                .position(x: balloon.xPosition + balloon.xOffset, y: balloon.yOffset + balloon.size.height / 2 + 85 + bobbingOffset)
                 .opacity(opacity)
                 .scaleEffect(scale)
             
@@ -239,30 +379,89 @@ struct BalloonView: View {
         let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
         impactGenerator.impactOccurred()
     }
+    
+    private func startIdleAnimations() {
+        // Gentle bobbing animation
+        withAnimation(
+            .easeInOut(duration: Double.random(in: 2.5...4.0))
+            .repeatForever(autoreverses: true)
+        ) {
+            bobbingOffset = CGFloat.random(in: -3...3)
+        }
+        
+        // Subtle breathing scale effect
+        withAnimation(
+            .easeInOut(duration: Double.random(in: 3.0...5.0))
+            .repeatForever(autoreverses: true)
+        ) {
+            breathingScale = CGFloat.random(in: 0.98...1.02)
+        }
+        
+        // Very gentle rotation
+        withAnimation(
+            .linear(duration: Double.random(in: 8.0...12.0))
+            .repeatForever(autoreverses: false)
+        ) {
+            gentleRotation = Double.random(in: -2...2)
+        }
+    }
 }
 
-// MARK: - Simplified String Path View (Better Performance)
-struct SimplifiedStringView: View {
+// MARK: - Natural Balloon String View
+struct CurvyStringView: View {
     let startPoint: CGPoint
     let endPoint: CGPoint
     let animationOffset: CGFloat
     
     var body: some View {
         Path { path in
-            let midY = (startPoint.y + endPoint.y) / 2
-            let control1 = CGPoint(x: startPoint.x + animationOffset * 5, y: midY - 10)
-            let control2 = CGPoint(x: endPoint.x - animationOffset * 5, y: midY + 10)
+            // Simple, natural-looking balloon string with gentle curves
+            let stringLength = endPoint.y - startPoint.y
+            let midY = startPoint.y + stringLength * 0.5
+            
+            // Gentle sway based on animation offset (wind effect)
+            let swayAmount: CGFloat = 3.0
+            let sway = sin(Double(animationOffset) * 0.05) * swayAmount
+            
+            // Create a gentle S-curve like a real hanging string
+            let quarterY = startPoint.y + stringLength * 0.25
+            let threeQuarterY = startPoint.y + stringLength * 0.75
             
             path.move(to: startPoint)
-            path.addCurve(to: endPoint, control1: control1, control2: control2)
+            
+            // First curve segment (top quarter)
+            let control1 = CGPoint(
+                x: startPoint.x + sway * 0.5,
+                y: quarterY - 5
+            )
+            let point1 = CGPoint(
+                x: startPoint.x + sway,
+                y: quarterY
+            )
+            path.addQuadCurve(to: point1, control: control1)
+            
+            // Second curve segment (middle)
+            let control2 = CGPoint(
+                x: startPoint.x + sway * 1.5,
+                y: midY
+            )
+            let point2 = CGPoint(
+                x: startPoint.x - sway * 0.5,
+                y: threeQuarterY
+            )
+            path.addQuadCurve(to: point2, control: control2)
+            
+            // Final segment to end point
+            let control3 = CGPoint(
+                x: endPoint.x - sway * 0.3,
+                y: threeQuarterY + 10
+            )
+            path.addQuadCurve(to: endPoint, control: control3)
         }
         .stroke(
-            LinearGradient(
-                colors: [.gray.opacity(0.6), .black.opacity(0.5)],
-                startPoint: .top,
-                endPoint: .bottom
-            ),
-            style: StrokeStyle(lineWidth: 2, lineCap: .round)
+            Color.gray.opacity(0.7),
+            style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round)
         )
+        .shadow(color: .black.opacity(0.15), radius: 0.5, x: 0.5, y: 0.5)
     }
 }
