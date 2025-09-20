@@ -8,6 +8,15 @@
 import SwiftUI
 import CoreData
 
+// MARK: - DateFormatter Extension for daily caching
+extension DateFormatter {
+    static let yyyyMMdd: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+}
+
 struct LearningView: View {
     @Environment(\.managedObjectContext) private var context
     @State private var dailyIdiom: NSManagedObject?
@@ -55,8 +64,10 @@ struct LearningView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                // Refresh data when app comes to foreground
-                loadDailyIdiom()
+                // Only refresh learned status and review words when app comes to foreground
+                if let word = dailyIdiom?.value(forKey: "word") as? String {
+                    isLearned = getLearnedStatus(for: word)
+                }
                 loadReviewWords()
             }
             .sheet(isPresented: $showReview) {
@@ -358,37 +369,96 @@ struct LearningView: View {
     
     
     private func loadDailyIdiom() {
-        let context = CoreDataManager.shared.context
+        let today = DateFormatter.yyyyMMdd.string(from: Date())
+        let savedDate = UserDefaults.standard.string(forKey: "dailyIdiomDate") ?? ""
+        let savedWordID = UserDefaults.standard.string(forKey: "dailyIdiomWord") ?? ""
         
-        // Refresh the context to ensure we have the latest data
+        // Check if we have today's word saved
+        if savedDate == today && !savedWordID.isEmpty {
+            // Load the saved word from Core Data
+            let context = CoreDataManager.shared.context
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
+            request.predicate = NSPredicate(format: "word == %@", savedWordID)
+            
+            do {
+                if let savedIdiom = try context.fetch(request).first {
+                    dailyIdiom = savedIdiom
+                    isLearned = getLearnedStatus(for: savedWordID)
+                    print("Loaded saved daily word for \(today): '\(savedWordID)' (learned: \(isLearned))")
+                    return
+                } else {
+                    print("Saved word '\(savedWordID)' not found in database, loading new word")
+                }
+            } catch {
+                print("Failed to load saved daily word: \(error)")
+            }
+        }
+        
+        // Load a new daily word
+        loadNewDailyIdiom(for: today)
+    }
+    
+    private func loadNewDailyIdiom(for date: String) {
+        let context = CoreDataManager.shared.context
         context.refreshAllObjects()
         
-        // Always fetch ALL idioms for consistent daily selection
-        let allRequest = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
+        // Get learned words to exclude from selection
+        let learnedWords = getLearnedWords()
+        
+        // Get unlearned idioms for today's selection
+        let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
+        if !learnedWords.isEmpty {
+            request.predicate = NSPredicate(format: "NOT (word IN %@)", learnedWords)
+        }
         
         do {
-            let allIdioms = try context.fetch(allRequest)
+            let availableIdioms = try context.fetch(request)
             
-            if !allIdioms.isEmpty {
-                // Use day-based deterministic selection to ensure same word all day
+            if !availableIdioms.isEmpty {
+                // Use day-based selection from available unlearned idioms
                 let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+                let dailyIndex = (dayOfYear - 1) % availableIdioms.count
+                dailyIdiom = availableIdioms[dailyIndex]
                 
-                // Create consistent daily word using modulo - same word every day
-                let dailyIndex = (dayOfYear - 1) % allIdioms.count
-                dailyIdiom = allIdioms[dailyIndex]
-                
-                // Update learned status for display
                 if let word = dailyIdiom?.value(forKey: "word") as? String {
-                    isLearned = getLearnedStatus(for: word)
-                    print("Daily idiom for day \(dayOfYear): '\(word)' (learned: \(isLearned))")
-                    print("Selected from \(allIdioms.count) total idioms at index \(dailyIndex)")
+                    isLearned = false // Since we only select from unlearned words
+                    
+                    // Save to UserDefaults
+                    UserDefaults.standard.set(date, forKey: "dailyIdiomDate")
+                    UserDefaults.standard.set(word, forKey: "dailyIdiomWord")
+                    
+                    print("Loaded new daily idiom for \(date): '\(word)' (index \(dailyIndex) from \(availableIdioms.count) available)")
                 }
             } else {
-                print("No idioms found in database")
+                // All words are learned - fall back to any word
+                let allRequest = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
+                let allIdioms = try context.fetch(allRequest)
+                
+                if !allIdioms.isEmpty {
+                    let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+                    let dailyIndex = (dayOfYear - 1) % allIdioms.count
+                    dailyIdiom = allIdioms[dailyIndex]
+                    
+                    if let word = dailyIdiom?.value(forKey: "word") as? String {
+                        isLearned = getLearnedStatus(for: word)
+                        
+                        // Save to UserDefaults
+                        UserDefaults.standard.set(date, forKey: "dailyIdiomDate")
+                        UserDefaults.standard.set(word, forKey: "dailyIdiomWord")
+                        
+                        print("All words learned - loaded daily word for \(date): '\(word)' (learned: \(isLearned))")
+                    }
+                }
             }
         } catch {
             print("Failed to load daily idiom: \(error)")
         }
+    }
+    
+    // Optional: Force load a new daily word (useful for testing or refreshing)
+    private func forceLoadNewDailyWord() {
+        let today = DateFormatter.yyyyMMdd.string(from: Date())
+        loadNewDailyIdiom(for: today)
     }
     
     private func loadReviewWords() {
