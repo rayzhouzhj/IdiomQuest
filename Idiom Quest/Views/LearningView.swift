@@ -108,7 +108,7 @@ struct LearningView: View {
                 VStack(spacing: 20) {
                     // Word and pinyin
                     VStack(spacing: 8) {
-                        Text((idiom.value(forKey: "word") as? String ?? "No Word").toPreferredChinese())
+                        LocalizedText((idiom.value(forKey: "word") as? String ?? ""))
                             .font(.system(size: 32, weight: .bold, design: .serif))
                             .multilineTextAlignment(.center)
                             .foregroundStyle(
@@ -119,7 +119,7 @@ struct LearningView: View {
                                 )
                             )
                         
-                        Text(idiom.value(forKey: "pinyin") as? String ?? "No Pinyin")
+                        Text(idiom.value(forKey: "pinyin") as? String ?? "")
                             .font(.title3)
                             .foregroundColor(.secondary)
                             .italic()
@@ -128,7 +128,7 @@ struct LearningView: View {
                     // Explanation
                     VStack(alignment: .leading, spacing: 12) {
                         Label {
-                            Text((idiom.value(forKey: "explanation") as? String ?? "No Explanation").toPreferredChinese())
+                            LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                                 .font(.body)
                                 .multilineTextAlignment(.leading)
                         } icon: {
@@ -138,7 +138,7 @@ struct LearningView: View {
                         
                         if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
                             Label {
-                                Text(example.toPreferredChinese())
+                                LocalizedText(example)
                                     .font(.subheadline)
                                     .italic()
                             } icon: {
@@ -149,7 +149,7 @@ struct LearningView: View {
                         
                         if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
                             Label {
-                                Text(derivation.toPreferredChinese())
+                                LocalizedText(derivation)
                                     .font(.subheadline)
                             } icon: {
                                 Image(systemName: "book.closed.fill")
@@ -175,7 +175,7 @@ struct LearningView: View {
                             Image(systemName: isLearned ? "checkmark.circle.fill" : "plus.circle.fill")
                                 .font(.title2)
                             
-                            Text(isLearned ? "已學會" : "標記為已學會")
+                            LocalizedText(isLearned ? "已學會" : "標記為已學會")
                                 .fontWeight(.semibold)
                         }
                         .padding(.horizontal, 20)

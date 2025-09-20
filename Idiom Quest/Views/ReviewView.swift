@@ -36,9 +36,9 @@ struct ReviewView: View {
         // Apply search filter
         if !searchText.isEmpty {
             filtered = filtered.filter { idiom in
-                let word = (idiom.value(forKey: "word") as? String ?? "").toPreferredChinese()
+                let word = (idiom.value(forKey: "word") as? String ?? "")
                 let pinyin = idiom.value(forKey: "pinyin") as? String ?? ""
-                let explanation = (idiom.value(forKey: "explanation") as? String ?? "").toPreferredChinese()
+                let explanation = (idiom.value(forKey: "explanation") as? String ?? "")
                 
                 return word.localizedCaseInsensitiveContains(searchText) ||
                        pinyin.localizedCaseInsensitiveContains(searchText) ||
@@ -117,7 +117,7 @@ struct ReviewView: View {
                 Spacer()
                 
                 VStack {
-                    LocalizedText("已學成語".toPreferredChinese())
+                    LocalizedText("已學成語")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(
@@ -160,7 +160,7 @@ struct ReviewView: View {
                             Image(systemName: category.icon)
                                 .font(.caption)
                             
-                            Text(category.rawValue)
+                            LocalizedText(category.rawValue)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                         }
@@ -216,11 +216,11 @@ struct ReviewView: View {
                 .foregroundColor(.gray.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text(getEmptyStateTitle())
+                LocalizedText(getEmptyStateTitle())
                     .font(.headline)
                     .multilineTextAlignment(.center)
                 
-                Text(getEmptyStateSubtitle())
+                LocalizedText(getEmptyStateSubtitle())
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -250,7 +250,7 @@ struct ReviewView: View {
             // Word and status
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text((idiom.value(forKey: "word") as? String ?? "No Word").toPreferredChinese())
+                    LocalizedText((idiom.value(forKey: "word") as? String ?? ""))
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(
@@ -261,7 +261,7 @@ struct ReviewView: View {
                             )
                         )
                     
-                    Text(idiom.value(forKey: "pinyin") as? String ?? "No Pinyin")
+                    Text(idiom.value(forKey: "pinyin") as? String ?? "")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .italic()
@@ -295,14 +295,14 @@ struct ReviewView: View {
             }
             
             // Explanation
-            Text((idiom.value(forKey: "explanation") as? String ?? "No Explanation").toPreferredChinese())
+            LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                 .font(.body)
                 .lineLimit(3)
             
             // Additional info
             if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
                 Label {
-                    Text(example.toPreferredChinese())
+                    LocalizedText(example)
                         .font(.caption)
                         .lineLimit(2)
                 } icon: {
