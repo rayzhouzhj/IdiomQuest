@@ -363,23 +363,28 @@ struct LearningView: View {
         // Refresh the context to ensure we have the latest data
         context.refreshAllObjects()
         
-        let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
-        request.fetchLimit = 1
+        // Always fetch ALL idioms for consistent daily selection
+        let allRequest = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
         
         do {
-            let totalCount = try context.count(for: request)
-            if totalCount > 0 {
-                // Use consistent day-based offset (your original approach, fixed)
-                let dayOffset = Calendar.current.component(.day, from: Date()) % totalCount
-                request.fetchOffset = dayOffset
-                
-                dailyIdiom = try context.fetch(request).first
-            }
+            let allIdioms = try context.fetch(allRequest)
             
-            // Update learned status
-            if let word = dailyIdiom?.value(forKey: "word") as? String {
-                isLearned = getLearnedStatus(for: word)
-                print("Daily idiom '\(word)' loaded with learned status: \(isLearned)")
+            if !allIdioms.isEmpty {
+                // Use day-based deterministic selection to ensure same word all day
+                let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+                
+                // Create consistent daily word using modulo - same word every day
+                let dailyIndex = (dayOfYear - 1) % allIdioms.count
+                dailyIdiom = allIdioms[dailyIndex]
+                
+                // Update learned status for display
+                if let word = dailyIdiom?.value(forKey: "word") as? String {
+                    isLearned = getLearnedStatus(for: word)
+                    print("Daily idiom for day \(dayOfYear): '\(word)' (learned: \(isLearned))")
+                    print("Selected from \(allIdioms.count) total idioms at index \(dailyIndex)")
+                }
+            } else {
+                print("No idioms found in database")
             }
         } catch {
             print("Failed to load daily idiom: \(error)")
