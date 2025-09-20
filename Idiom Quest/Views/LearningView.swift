@@ -104,11 +104,11 @@ struct LearningView: View {
     
     private var dailyIdiomCard: some View {
         VStack {
-            if let idiom = dailyIdiom {
+            if let idiom = dailyIdiom, let todaysWord = idiom.value(forKey: "word") as? String {
                 VStack(spacing: 20) {
                     // Word and pinyin
                     VStack(spacing: 8) {
-                        LocalizedText((idiom.value(forKey: "word") as? String ?? ""))
+                        LocalizedText(todaysWord)
                             .font(.system(size: 32, weight: .bold, design: .serif))
                             .multilineTextAlignment(.center)
                             .foregroundStyle(
@@ -138,7 +138,7 @@ struct LearningView: View {
                         
                         if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
                             Label {
-                                LocalizedText(example)
+                                LocalizedText(example.replacingOccurrences(of: "～", with: todaysWord))
                                     .font(.subheadline)
                                     .italic()
                             } icon: {

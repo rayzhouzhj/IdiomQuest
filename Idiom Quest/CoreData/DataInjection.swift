@@ -143,13 +143,13 @@ func testDatabase() {
 //@main
 struct ConvertIdioms {
     static func main() {
-        let jsonFilePath = "/Users/rayzhou/Downloads/idiom.json" // Update with your JSON file path
+        let jsonFilePath = "/Users/rayzhou/Documents/github-workspace/Idiom Quest/idiom.json" // Update with your JSON file path
         let modelName = "Idiom_Quest" // Match .xcdatamodeld name
-        let outputSQLitePath = "/Users/rayzhou/Downloads/ChengyuData.sqlite" // Update with desired output path
+        let outputSQLitePath = "/Users/rayzhou/Documents/github-workspace/Idiom Quest/Idiom Quest/Resources/ChengyuData.sqlite" // Update with desired output path
         let modelURL: URL? = nil // Set to .momd path if running standalone
         
         convertJSONToCoreData(jsonFilePath: jsonFilePath, modelName: modelName, outputSQLitePath: outputSQLitePath, modelURL: modelURL)
         
-        testDatabase()
+//        testDatabase()
     }
 }
