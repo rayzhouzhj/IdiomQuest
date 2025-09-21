@@ -184,7 +184,7 @@ struct BalloonView: View {
             .scaleEffect(scale)
             
             // Enhanced word display with premium styling
-            Text(balloon.answer.text.localized)
+            LocalizedText(balloon.answer.text.localized)
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
@@ -275,7 +275,7 @@ struct BalloonView: View {
             
             // "POP!" text effect
             if showPopText {
-                Text("POP!")
+                LocalizedText("POP!")
                     .font(.system(size: 24, weight: .black, design: .rounded))
                     .foregroundColor(.red)
                     .shadow(color: .black.opacity(0.5), radius: 2)

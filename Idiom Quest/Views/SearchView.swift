@@ -205,7 +205,7 @@ struct SearchView: View {
             Image(systemName: tab.icon)
                 .font(.subheadline)
             
-            Text(tab.rawValue)
+            LocalizedText(tab.rawValue)
                 .font(.subheadline)
                 .fontWeight(.medium)
         }
@@ -325,7 +325,7 @@ struct SearchView: View {
             // Header with word and learn button
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text((idiom.value(forKey: "word") as? String ?? "").toPreferredChinese())
+                    LocalizedText((idiom.value(forKey: "word") as? String ?? ""))
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(
@@ -336,7 +336,7 @@ struct SearchView: View {
                             )
                         )
                     
-                    Text(idiom.value(forKey: "pinyin") as? String ?? "")
+                    LocalizedText(idiom.value(forKey: "pinyin") as? String ?? "")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .italic()
@@ -348,7 +348,7 @@ struct SearchView: View {
             }
             
             // Explanation
-            Text((idiom.value(forKey: "explanation") as? String ?? "").toPreferredChinese())
+            LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                 .font(.body)
                 .lineLimit(4)
             
@@ -356,7 +356,7 @@ struct SearchView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
                     Label {
-                        Text(example.toPreferredChinese())
+                        LocalizedText(example)
                             .font(.caption)
                             .lineLimit(2)
                     } icon: {
@@ -368,7 +368,7 @@ struct SearchView: View {
                 
                 if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
                     Label {
-                        Text(derivation.toPreferredChinese())
+                        LocalizedText(derivation)
                             .font(.caption)
                             .lineLimit(2)
                     } icon: {
@@ -398,7 +398,7 @@ struct SearchView: View {
                 Image(systemName: isLearned ? "checkmark.circle.fill" : "plus.circle.fill")
                     .font(.subheadline)
                 
-                Text(isLearned ? "已學會" : "學習")
+                LocalizedText(isLearned ? "已學會" : "學習")
                     .font(.caption)
                     .fontWeight(.semibold)
             }
@@ -425,7 +425,7 @@ struct SearchView: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    Text(formatDate(historyItem.searchDate))
+                    LocalizedText(formatDate(historyItem.searchDate))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -463,7 +463,7 @@ struct SearchView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(historyItem.results.prefix(3), id: \.objectID) { result in
-                            Text((result.value(forKey: "word") as? String ?? "").toPreferredChinese())
+                            LocalizedText((result.value(forKey: "word") as? String ?? ""))
                                 .font(.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)

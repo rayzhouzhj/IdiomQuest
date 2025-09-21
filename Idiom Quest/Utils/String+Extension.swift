@@ -42,13 +42,12 @@ extension String {
         case .simplified:
             return self.toSimplifiedChinese()
         case .auto:
-            let preferredLanguage = Locale.preferredLanguages.first ?? "zh-Hans"
-            let traditionalLocales = ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "yue-Hant-HK", "yue-Hant-MO"]
-            if traditionalLocales.contains(where: preferredLanguage.contains) {
+                let preferredLanguage = Locale.preferredLanguages.first ?? "zh-Hans"
+                if preferredLanguage.contains("zh-Hans") || preferredLanguage.contains("zh-CN") {
+                    return self.toSimplifiedChinese()
+                }
                 return self.toTraditionalChinese()
             }
-            return self
-        }
     }
     
     /// Convenience property for automatic localization

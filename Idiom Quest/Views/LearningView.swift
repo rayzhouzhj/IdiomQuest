@@ -86,7 +86,7 @@ struct LearningView: View {
                     .foregroundColor(.orange)
                     .font(.title2)
                 
-                LocalizedText("每日一詞".toPreferredChinese())
+                LocalizedText("每日一詞")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(
@@ -106,7 +106,7 @@ struct LearningView: View {
                 }
             }
             
-            LocalizedText("學習新成語，豐富你的詞彙！".toPreferredChinese())
+            LocalizedText("學習新成語，豐富你的詞彙！")
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
@@ -217,7 +217,7 @@ struct LearningView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                     
-                    Text(LocalizationKeys.Learning.loadingDailyIdiom)
+                    LocalizedText(LocalizationKeys.Learning.loadingDailyIdiom)
                         .font(.headline)
                         .foregroundColor(.secondary)
                 }
@@ -330,12 +330,12 @@ struct LearningView: View {
     
     private func reviewWordCard(word: NSManagedObject) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text((word.value(forKey: "word") as? String ?? "").toPreferredChinese())
+            LocalizedText((word.value(forKey: "word") as? String ?? ""))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .lineLimit(2)
             
-            Text(word.value(forKey: "pinyin") as? String ?? "")
+            LocalizedText(word.value(forKey: "pinyin") as? String ?? "")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .lineLimit(1)

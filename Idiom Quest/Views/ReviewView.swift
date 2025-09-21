@@ -261,7 +261,7 @@ struct ReviewView: View {
                             )
                         )
                     
-                    Text(idiom.value(forKey: "pinyin") as? String ?? "")
+                    LocalizedText(idiom.value(forKey: "pinyin") as? String ?? "")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .italic()

@@ -344,7 +344,7 @@ struct GameView: View {
                                     selectedDuration = duration
                                 }
                             }) {
-                                Text(label)
+                                LocalizedText(label)
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(selectedDuration == duration ? .black : .white)
                                     .padding(.horizontal, 16)
@@ -732,7 +732,7 @@ struct GameView: View {
                             .font(.headline)
                             .foregroundColor(.white)
                         HStack {
-                            Text("\(correctAnswers)")
+                            LocalizedText("\(correctAnswers)")
                                 .font(.system(size: 40, weight: .bold))
                                 .foregroundColor(.yellow)
                             Text("🎈")
@@ -746,7 +746,7 @@ struct GameView: View {
                         LocalizedText("答對題數")
                             .font(.headline)
                             .foregroundColor(.white)
-                        Text("\(correctAnswers)/\(totalRounds)")
+                        LocalizedText("\(correctAnswers)/\(totalRounds)")
                             .font(.system(size: 40, weight: .bold))
                             .foregroundColor(.green)
                     }

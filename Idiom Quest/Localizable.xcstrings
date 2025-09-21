@@ -1,19 +1,6 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
-    "%lld" : {
-
-    },
-    "%lld/%lld" : {
-      "localizations" : {
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld/%2$lld"
-          }
-        }
-      }
-    },
     "⏸️" : {
 
     },
@@ -46,9 +33,6 @@
         }
       }
     },
-    "POP!" : {
-
-    },
     "Review" : {
 
     },
@@ -59,12 +43,6 @@
 
     },
     "取消" : {
-
-    },
-    "學習" : {
-
-    },
-    "已學會" : {
 
     },
     "搜尋成語、拼音或解釋..." : {
