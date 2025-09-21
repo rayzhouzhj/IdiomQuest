@@ -26,6 +26,8 @@ struct LearningView: View {
     @State private var reviewWords: [NSManagedObject] = []
     @State private var animateCard = false
     @State private var showConfetti = false
+    @State private var showDetailedReview = false
+    @State private var selectedReviewWord: NSManagedObject?
     
     var body: some View {
         NavigationView {
@@ -75,6 +77,13 @@ struct LearningView: View {
             }
             .sheet(isPresented: $showSearch) {
                 SearchView()
+            }
+            .sheet(isPresented: $showDetailedReview) {
+                if let word = selectedReviewWord {
+                    DetailedReviewView(word: word) { reviewedWord in
+                        markWordAsReviewed(reviewedWord)
+                    }
+                }
             }
         }
     }
@@ -363,7 +372,8 @@ struct LearningView: View {
                 )
         )
         .onTapGesture {
-            // Handle review word tap - could navigate to detailed view
+            selectedReviewWord = word
+            showDetailedReview = true
         }
     }
     
@@ -615,6 +625,43 @@ struct LearningView: View {
             
         } catch {
             print("Failed to debug UserData: \(error)")
+        }
+    }
+    
+    private func markWordAsReviewed(_ word: NSManagedObject) {
+        guard let wordText = word.value(forKey: "word") as? String else { return }
+        
+        let context = CoreDataManager.shared.context
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        userDataRequest.predicate = NSPredicate(format: "word == %@", wordText)
+        
+        do {
+            if let userData = try context.fetch(userDataRequest).first {
+                let now = Date()
+                let currentReviewCount = userData.value(forKey: "reviewCount") as? Int32 ?? 0
+                
+                // Update last review date
+                userData.setValue(now, forKey: "lastReviewDate")
+                
+                // Calculate next review date using spaced repetition
+                let nextReviewInterval = getReviewInterval(for: Int(currentReviewCount))
+                userData.setValue(now.addingTimeInterval(nextReviewInterval), forKey: "nextReviewDate")
+                
+                // Increment review count
+                userData.setValue(currentReviewCount + 1, forKey: "reviewCount")
+                
+                CoreDataManager.shared.saveContext()
+                print("Marked '\(wordText)' as reviewed. Next review in \(Int(nextReviewInterval / 86400)) days")
+                
+                // Refresh review words to remove this word from today's review list
+                loadReviewWords()
+                
+                // Close the detailed view
+                showDetailedReview = false
+                selectedReviewWord = nil
+            }
+        } catch {
+            print("Failed to mark word as reviewed: \(error)")
         }
     }
 }
