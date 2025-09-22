@@ -614,7 +614,6 @@ struct LearningView: View {
             for userData in allUserData {
                 let word = userData.value(forKey: "word") as? String ?? "Unknown"
                 let learned = userData.value(forKey: "isLearned") as? Bool ?? false
-                print("UserData: '\(word)' - learned: \(learned)")
             }
             
             // Check if any entries are marked as learned
