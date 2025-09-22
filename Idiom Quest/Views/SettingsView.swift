@@ -58,52 +58,65 @@ struct SettingsView: View {
     
     // MARK: - Header Section
     private var headerSection: some View {
-        // Compact horizontal layout
-        HStack(spacing: 15) {
-            // Compact App Icon
-            Image(systemName: "book.closed.fill")
-                .font(.system(size: 35))
-                .foregroundStyle(
-                    LinearGradient(
-                        gradient: Gradient(colors: [.orange, .red, .purple]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+        VStack(spacing: 20) {
+            // App Icon with enhanced design
+            ZStack {
+                // Background circle with gradient
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.orange.opacity(0.2), .purple.opacity(0.2)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .frame(width: 55, height: 55)
-                .background(
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: .orange.opacity(0.2), radius: 8, x: 0, y: 4)
-                )
+                    .frame(width: 80, height: 80)
+                
+                // Inner circle with material
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 65, height: 65)
+                    .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                
+                // Icon
+                Image(systemName: "book.closed.fill")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [.orange, .red, .purple]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
             
-            // Title and Tagline - Vertical Stack
-            VStack(alignment: .leading, spacing: 4) {
+            // Title and Tagline - Centered
+            VStack(spacing: 8) {
                 LocalizedText("成語探險")
-                    .font(.title2)
+                    .font(.title)
                     .fontWeight(.bold)
                     .foregroundStyle(
                         LinearGradient(
-                            gradient: Gradient(colors: [.blue, .purple]),
+                            gradient: Gradient(colors: [.primary, .blue, .purple]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
                 
-                LocalizedText("每日一詞，智慧積累")
+                LocalizedText("探索中華文化的智慧寶藏")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
-            
-            Spacer()
         }
+        .padding(.vertical, 30)
         .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+                .shadow(color: .black.opacity(0.08), radius: 15, x: 0, y: 8)
         )
     }
     
