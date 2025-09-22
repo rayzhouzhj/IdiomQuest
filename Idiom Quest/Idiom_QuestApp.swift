@@ -20,10 +20,6 @@ struct IdiomQuestApp: App {
     @StateObject private var languageSettings = LanguageSettings.shared
     @State private var selectedTab = 0 // Tabs: 0: Learning, 1: Game, 2: Review, 3: Settings
     
-    init() {
-        coreDataManager.initializeUserData()
-    }
-    
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedTab) {
