@@ -312,6 +312,7 @@ struct ReviewView: View {
                         LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                             .font(.body)
                             .lineLimit(3)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .blur(radius: 8)
                         
                         VStack(spacing: 8) {
@@ -324,14 +325,17 @@ struct ReviewView: View {
                                 .foregroundColor(.orange)
                                 .fontWeight(.medium)
                         }
+                        .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
                     }
+                    .frame(maxWidth: .infinity)
                     
                     LocalizedText("先思考一下這個成語的意思，然後點擊查看")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .italic()
                         .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
                 }
             } else {
                 // Unmasked content
@@ -344,13 +348,23 @@ struct ReviewView: View {
                     // Additional info
                     if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
                         Label {
-                            LocalizedText(example)
+                            LocalizedText(example.replacingOccurrences(of: "～", with: word))
                                 .font(.caption)
                                 .lineLimit(2)
                         } icon: {
                             Image(systemName: "quote.bubble.fill")
                                 .foregroundColor(.blue)
                                 .font(.caption)
+                        }
+                    }
+                    
+                    if let derivation = idiom.value(forKey: "derivation") as? String, !derivation.isEmpty {
+                        Label {
+                            LocalizedText(derivation)
+                                .font(.caption)
+                        } icon: {
+                            Image(systemName: "book.closed.fill")
+                                .foregroundColor(.orange)
                         }
                     }
                     

@@ -95,7 +95,7 @@ struct SearchView: View {
             Spacer()
             
             VStack {
-                LocalizedText("搜尋成語".toPreferredChinese())
+                LocalizedText("搜尋成語")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundStyle(

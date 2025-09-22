@@ -15,36 +15,52 @@ struct DetailedReviewView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showConfetti = false
     @State private var isExplanationRevealed = false
+    @State private var isExampleRevealed = false
+    @State private var isDerivationRevealed = false
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 25) {
-                    // Debug: Check if word has valid data
-                    if word.value(forKey: "word") as? String == nil {
-                        VStack(spacing: 15) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.largeTitle)
-                                .foregroundColor(.orange)
-                            Text("詞語數據異常")
-                                .font(.headline)
-                            Text("無法加載此詞語的詳細信息")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                
-                            Button("返回") {
-                                dismiss()
-                            }
-                            .foregroundColor(.blue)
-                            .padding(.top)
-                        }
-                        .padding(40)
-                    } else {
-                        contentView
+            VStack(spacing: 0) {
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.gray)
                     }
+                    
+                    Spacer()
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.top, 20)
+                
+                ScrollView {
+                    VStack(spacing: 25) {
+                        // Debug: Check if word has valid data
+                        if word.value(forKey: "word") as? String == nil {
+                            VStack(spacing: 15) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.orange)
+                                Text("詞語數據異常")
+                                    .font(.headline)
+                                Text("無法加載此詞語的詳細信息")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                Button("返回") {
+                                    dismiss()
+                                }
+                                .foregroundColor(.blue)
+                                .padding(.top)
+                            }
+                            .padding(40)
+                        } else {
+                            contentView
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+                }
             }
             .background(
                 LinearGradient(
@@ -55,13 +71,6 @@ struct DetailedReviewView: View {
                 .ignoresSafeArea()
             )
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-            }
         }
         .overlay(
             showConfetti ? ConfettiView(sourcePosition: nil) : nil
@@ -123,6 +132,7 @@ struct DetailedReviewView: View {
                                     LocalizedText(explanation.replacingOccurrences(of: "～", with: wordText))
                                         .font(.body)
                                         .multilineTextAlignment(.leading)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                         .blur(radius: isExplanationRevealed ? 0 : 8)
                                         .animation(.easeInOut(duration: 0.3), value: isExplanationRevealed)
                                 }
@@ -138,9 +148,11 @@ struct DetailedReviewView: View {
                                             .foregroundColor(.orange)
                                             .fontWeight(.medium)
                                     }
+                                    .frame(maxWidth: .infinity)
                                     .padding(.vertical, 20)
                                 }
                             }
+                            .frame(maxWidth: .infinity)
                         } icon: {
                             Image(systemName: "lightbulb.fill")
                                 .foregroundColor(.yellow)
@@ -164,24 +176,98 @@ struct DetailedReviewView: View {
                     // Example
                     if let wordText = word.value(forKey: "word") as? String,
                        let example = word.value(forKey: "example") as? String, !example.isEmpty {
-                        Label {
-                            LocalizedText(example.replacingOccurrences(of: "～", with: wordText))
-                                .font(.subheadline)
-                                .italic()
-                        } icon: {
-                            Image(systemName: "quote.bubble.fill")
-                                .foregroundColor(.green)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label {
+                                ZStack {
+                                    LocalizedText(example.replacingOccurrences(of: "～", with: wordText))
+                                        .font(.subheadline)
+                                        .italic()
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .blur(radius: isExampleRevealed ? 0 : 8)
+                                        .animation(.easeInOut(duration: 0.3), value: isExampleRevealed)
+                                    
+                                    if !isExampleRevealed {
+                                        VStack(spacing: 8) {
+                                            Image(systemName: "eye.slash.fill")
+                                                .font(.title3)
+                                                .foregroundColor(.green)
+                                            
+                                            LocalizedText("輕觸顯示例句")
+                                                .font(.caption2)
+                                                .foregroundColor(.green)
+                                                .fontWeight(.medium)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 15)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                            } icon: {
+                                Image(systemName: "quote.bubble.fill")
+                                    .foregroundColor(.green)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    isExampleRevealed = true
+                                }
+                            }
+                            
+                            if !isExampleRevealed {
+                                LocalizedText("點擊查看使用例句")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .italic()
+                                    .padding(.leading, 30)
+                            }
                         }
                     }
                     
                     // Derivation
                     if let derivation = word.value(forKey: "derivation") as? String, !derivation.isEmpty {
-                        Label {
-                            LocalizedText(derivation)
-                                .font(.subheadline)
-                        } icon: {
-                            Image(systemName: "book.closed.fill")
-                                .foregroundColor(.orange)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label {
+                                ZStack {
+                                    LocalizedText(derivation)
+                                        .font(.subheadline)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .blur(radius: isDerivationRevealed ? 0 : 8)
+                                        .animation(.easeInOut(duration: 0.3), value: isDerivationRevealed)
+                                    
+                                    if !isDerivationRevealed {
+                                        VStack(spacing: 8) {
+                                            Image(systemName: "eye.slash.fill")
+                                                .font(.title3)
+                                                .foregroundColor(.orange)
+                                            
+                                            LocalizedText("輕觸顯示出處")
+                                                .font(.caption2)
+                                                .foregroundColor(.orange)
+                                                .fontWeight(.medium)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 15)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                            } icon: {
+                                Image(systemName: "book.closed.fill")
+                                    .foregroundColor(.orange)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    isDerivationRevealed = true
+                                }
+                            }
+                            
+                            if !isDerivationRevealed {
+                                LocalizedText("點擊查看成語出處")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .italic()
+                                    .padding(.leading, 30)
+                            }
                         }
                     }
                 }
