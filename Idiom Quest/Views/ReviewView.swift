@@ -16,6 +16,8 @@ struct ReviewView: View {
     @State private var selectedCategory: ReviewCategory = .all
     @State private var animateCards = false
     @State var fromSheetPopup: Bool = false
+    @State private var unmaskedCards: Set<String> = []
+    @State private var showConfetti = false
     
     enum ReviewCategory: String, CaseIterable {
         case all = "全部"
@@ -104,6 +106,9 @@ struct ReviewView: View {
                 }
             }
         }
+        .overlay(
+            showConfetti ? ConfettiView(sourcePosition: nil) : nil
+        )
     }
     
     private var headerSection: some View {
@@ -249,11 +254,15 @@ struct ReviewView: View {
     }
     
     private func idiomCard(idiom: NSManagedObject) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let word = idiom.value(forKey: "word") as? String ?? ""
+        let needsReview = isWordDueForReview(word: word)
+        let isUnmasked = unmaskedCards.contains(word)
+        
+        return VStack(alignment: .leading, spacing: 12) {
             // Word and status
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    LocalizedText((idiom.value(forKey: "word") as? String ?? ""))
+                    LocalizedText(word)
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(
@@ -273,9 +282,7 @@ struct ReviewView: View {
                 Spacer()
                 
                 VStack(spacing: 4) {
-                    let word = idiom.value(forKey: "word") as? String ?? ""
-                    
-                    if isWordDueForReview(word: word) {
+                    if needsReview {
                         Image(systemName: "arrow.clockwise")
                             .font(.title2)
                             .foregroundColor(.orange)
@@ -297,42 +304,103 @@ struct ReviewView: View {
                 }
             }
             
-            // Explanation
-            LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
-                .font(.body)
-                .lineLimit(3)
-            
-            // Additional info
-            if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
-                Label {
-                    LocalizedText(example)
+            // Content section - masked or unmasked
+            if needsReview && !isUnmasked {
+                // Masked content
+                VStack(spacing: 12) {
+                    ZStack {
+                        LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
+                            .font(.body)
+                            .lineLimit(3)
+                            .blur(radius: 8)
+                        
+                        VStack(spacing: 8) {
+                            Image(systemName: "eye.slash.fill")
+                                .font(.title2)
+                                .foregroundColor(.orange)
+                            
+                            LocalizedText("輕觸顯示解釋")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                                .fontWeight(.medium)
+                        }
+                        .padding(.vertical, 20)
+                    }
+                    
+                    LocalizedText("先思考一下這個成語的意思，然後點擊查看")
                         .font(.caption)
-                        .lineLimit(2)
-                } icon: {
-                    Image(systemName: "quote.bubble.fill")
-                        .foregroundColor(.blue)
-                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .italic()
+                        .multilineTextAlignment(.center)
                 }
-            }
-            
-            // Review info
-            let word = idiom.value(forKey: "word") as? String ?? ""
-            if let lastReview = getLastReviewDate(for: word) {
-                HStack {
-                    Image(systemName: "clock")
-                        .foregroundColor(.gray)
-                        .font(.caption)
+            } else {
+                // Unmasked content
+                VStack(alignment: .leading, spacing: 12) {
+                    // Explanation
+                    LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
+                        .font(.body)
+                        .lineLimit(3)
                     
-                    LocalizedText("上次複習: \(formatDate(lastReview))")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                    // Additional info
+                    if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
+                        Label {
+                            LocalizedText(example)
+                                .font(.caption)
+                                .lineLimit(2)
+                        } icon: {
+                            Image(systemName: "quote.bubble.fill")
+                                .foregroundColor(.blue)
+                                .font(.caption)
+                        }
+                    }
                     
-                    Spacer()
+                    // Review info
+                    if let lastReview = getLastReviewDate(for: word) {
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundColor(.gray)
+                                .font(.caption)
+                            
+                            LocalizedText("上次複習: \(formatDate(lastReview))")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            
+                            Spacer()
+                            
+                            let reviewCount = getReviewCount(for: word)
+                            LocalizedText("複習 \(reviewCount) 次")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
                     
-                    let reviewCount = getReviewCount(for: word)
-                    LocalizedText("複習 \(reviewCount) 次")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                    // Review button for unmasked cards that need review
+                    if needsReview && isUnmasked {
+                        Button(action: {
+                            markWordAsReviewed(word: word)
+                        }) {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
+                                
+                                LocalizedText("已複習完成")
+                                    .fontWeight(.semibold)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [.orange, .red]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .foregroundColor(.white)
+                            .cornerRadius(20)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.top, 8)
+                    }
                 }
             }
         }
@@ -343,7 +411,11 @@ struct ReviewView: View {
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
         )
         .onTapGesture {
-            // Could add detailed view navigation here
+            if needsReview && !isUnmasked {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    unmaskedCards.insert(word)
+                }
+            }
         }
     }
     
@@ -367,6 +439,60 @@ struct ReviewView: View {
             return "過去7天內沒有學習記錄"
         case .needsReview:
             return "所有成語都已經掌握得很好！"
+        }
+    }
+    
+    private func markWordAsReviewed(word: String) {
+        let context = CoreDataManager.shared.context
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        userDataRequest.predicate = NSPredicate(format: "word == %@", word)
+        
+        do {
+            if let userData = try context.fetch(userDataRequest).first {
+                // Update review information
+                userData.setValue(Date(), forKey: "lastReviewDate")
+                
+                // Increment review count
+                let currentCount = userData.value(forKey: "reviewCount") as? Int32 ?? 0
+                userData.setValue(currentCount + 1, forKey: "reviewCount")
+                
+                // Calculate next review date using spaced repetition
+                let reviewCount = Int(currentCount + 1)
+                let interval = calculateReviewInterval(reviewCount: reviewCount)
+                let nextReviewDate = Calendar.current.date(byAdding: .day, value: interval, to: Date()) ?? Date()
+                userData.setValue(nextReviewDate, forKey: "nextReviewDate")
+                
+                // Save changes
+                try context.save()
+                
+                // Show confetti animation
+                withAnimation(.spring()) {
+                    showConfetti = true
+                    
+                    // Remove from unmasked cards after a delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        unmaskedCards.remove(word)
+                        showConfetti = false
+                    }
+                }
+                
+                // Reload the learned idioms to update the display
+                loadLearnedIdioms()
+            }
+        } catch {
+            print("Failed to mark word as reviewed: \(error)")
+        }
+    }
+    
+    private func calculateReviewInterval(reviewCount: Int) -> Int {
+        // Spaced repetition intervals (in days)
+        switch reviewCount {
+        case 1: return 1
+        case 2: return 3
+        case 3: return 7
+        case 4: return 14
+        case 5: return 30
+        default: return 60 // 2 months for subsequent reviews
         }
     }
     
