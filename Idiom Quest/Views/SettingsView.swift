@@ -58,46 +58,53 @@ struct SettingsView: View {
     
     // MARK: - Header Section
     private var headerSection: some View {
-        VStack(spacing: 15) {
-            // App Icon and Title
-            HStack(spacing: 15) {
-                Image(systemName: "app.fill")
-                    .font(.system(size: 50))
+        // Compact horizontal layout
+        HStack(spacing: 15) {
+            // Compact App Icon
+            Image(systemName: "book.closed.fill")
+                .font(.system(size: 35))
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.orange, .red, .purple]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 55, height: 55)
+                .background(
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .orange.opacity(0.2), radius: 8, x: 0, y: 4)
+                )
+            
+            // Title and Tagline - Vertical Stack
+            VStack(alignment: .leading, spacing: 4) {
+                LocalizedText("成語探險")
+                    .font(.title2)
+                    .fontWeight(.bold)
                     .foregroundStyle(
                         LinearGradient(
-                            gradient: Gradient(colors: [.orange, .red, .purple]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                            gradient: Gradient(colors: [.blue, .purple]),
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
                     )
-                    .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
                 
-                VStack(alignment: .leading, spacing: 5) {
-                    LocalizedText("成語探險")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundStyle(
-                            LinearGradient(
-                                gradient: Gradient(colors: [.blue, .purple]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                    
-                    LocalizedText("每日一詞，智慧積累")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
+                LocalizedText("每日一詞，智慧積累")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
             }
-            .padding(25)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 8)
-            )
+            
+            Spacer()
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        )
     }
     
     // MARK: - Language Section
