@@ -175,7 +175,7 @@ struct DetailedReviewView: View {
                     
                     // Example
                     if let wordText = word.value(forKey: "word") as? String,
-                       let example = word.value(forKey: "example") as? String, !example.isEmpty {
+                       let example = word.value(forKey: "example") as? String, !example.isEmpty, example.trimmingCharacters(in: .whitespaces) != "无" {
                         VStack(alignment: .leading, spacing: 8) {
                             Label {
                                 ZStack {

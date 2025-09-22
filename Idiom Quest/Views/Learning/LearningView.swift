@@ -156,7 +156,8 @@ struct LearningView: View {
                                 .foregroundColor(.yellow)
                         }
                         
-                        if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
+                        if let example = idiom.value(forKey: "example") as? String, !example.isEmpty,
+                            example.trimmingCharacters(in: .whitespaces) != "无" {
                             Label {
                                 LocalizedText(example.replacingOccurrences(of: "～", with: todaysWord))
                                     .font(.subheadline)
