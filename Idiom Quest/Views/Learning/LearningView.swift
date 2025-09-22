@@ -17,6 +17,17 @@ extension DateFormatter {
     }()
 }
 
+// Wrapper to make NSManagedObject conform to Identifiable
+struct IdentifiableManagedObject: Identifiable {
+    let id: NSManagedObjectID
+    let object: NSManagedObject
+    
+    init(_ object: NSManagedObject) {
+        self.id = object.objectID
+        self.object = object
+    }
+}
+
 struct LearningView: View {
     @Environment(\.managedObjectContext) private var context
     @State private var dailyIdiom: NSManagedObject?
@@ -26,8 +37,7 @@ struct LearningView: View {
     @State private var reviewWords: [NSManagedObject] = []
     @State private var animateCard = false
     @State private var showConfetti = false
-    @State private var showDetailedReview = false
-    @State private var selectedReviewWord: NSManagedObject?
+    @State private var selectedReviewWord: IdentifiableManagedObject?
     @State private var showSettings = false
     
     var body: some View {
@@ -78,11 +88,9 @@ struct LearningView: View {
             .sheet(isPresented: $showSearch) {
                 SearchView()
             }
-            .sheet(isPresented: $showDetailedReview) {
-                if let word = selectedReviewWord {
-                    DetailedReviewView(word: word) { reviewedWord in
-                        markWordAsReviewed(reviewedWord)
-                    }
+            .sheet(item: $selectedReviewWord) { identifiableWord in
+                DetailedReviewView(word: identifiableWord.object) { reviewedWord in
+                    markWordAsReviewed(reviewedWord)
                 }
             }
         }
@@ -373,8 +381,7 @@ struct LearningView: View {
                 )
         )
         .onTapGesture {
-            selectedReviewWord = word
-            showDetailedReview = true
+            selectedReviewWord = IdentifiableManagedObject(word)
         }
     }
     
@@ -632,8 +639,7 @@ struct LearningView: View {
                 // Refresh review words to remove this word from today's review list
                 loadReviewWords()
                 
-                // Close the detailed view
-                showDetailedReview = false
+                // Close the detailed view by clearing the selected word
                 selectedReviewWord = nil
             }
         } catch {
