@@ -15,6 +15,7 @@ struct ReviewView: View {
     @State private var searchText = ""
     @State private var selectedCategory: ReviewCategory = .all
     @State private var animateCards = false
+    @State var fromSheetPopup: Bool = false
     
     enum ReviewCategory: String, CaseIterable {
         case all = "全部"
@@ -108,10 +109,12 @@ struct ReviewView: View {
     private var headerSection: some View {
         VStack(spacing: 10) {
             HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.gray)
+                if fromSheetPopup {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.gray)
+                    }
                 }
                 
                 Spacer()

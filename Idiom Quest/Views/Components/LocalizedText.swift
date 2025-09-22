@@ -9,79 +9,135 @@ import SwiftUI
 
 /// A custom Text view that automatically applies preferred Chinese localization
 struct LocalizedText: View {
-    private let content: String
-    private let originalText: Text
+    private let originalContent: String
+    @ObservedObject private var languageSettings = LanguageSettings.shared
     
     init(_ content: String) {
-        self.content = content.toPreferredChinese()
-        self.originalText = Text(self.content)
+        self.originalContent = content
     }
     
     init<S>(_ content: S) where S : StringProtocol {
-        self.content = String(content).toPreferredChinese()
-        self.originalText = Text(self.content)
+        self.originalContent = String(content)
+    }
+    
+    private var localizedContent: String {
+        // This will update reactively when languageSettings.preferredLanguage changes
+        switch languageSettings.preferredLanguage {
+        case .traditionalChinese:
+            return originalContent.toTraditionalChinese()
+        case .simplifiedChinese:
+            return originalContent.toSimplifiedChinese()
+        }
     }
     
     var body: some View {
-        originalText
+        Text(localizedContent)
     }
 }
 
 // MARK: - Text Modifiers Support
 extension LocalizedText {
     func font(_ font: Font?) -> some View {
-        originalText.font(font)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).font(font)
+        }
     }
     
     func fontWeight(_ weight: Font.Weight?) -> some View {
-        originalText.fontWeight(weight)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).fontWeight(weight)
+        }
     }
     
     func foregroundColor(_ color: Color?) -> some View {
-        originalText.foregroundColor(color)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).foregroundColor(color)
+        }
     }
     
     func foregroundStyle<S>(_ style: S) -> some View where S : ShapeStyle {
-        originalText.foregroundStyle(style)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).foregroundStyle(style)
+        }
     }
     
     func multilineTextAlignment(_ alignment: TextAlignment) -> some View {
-        originalText.multilineTextAlignment(alignment)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).multilineTextAlignment(alignment)
+        }
     }
     
     func lineLimit(_ number: Int?) -> some View {
-        originalText.lineLimit(number)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).lineLimit(number)
+        }
     }
     
     func italic() -> some View {
-        originalText.italic()
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).italic()
+        }
     }
     
     func bold() -> some View {
-        originalText.bold()
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).bold()
+        }
     }
     
     func underline(_ active: Bool = true, color: Color? = nil) -> some View {
-        originalText.underline(active, color: color)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).underline(active, color: color)
+        }
     }
     
     func strikethrough(_ active: Bool = true, color: Color? = nil) -> some View {
-        originalText.strikethrough(active, color: color)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).strikethrough(active, color: color)
+        }
     }
     
     func textCase(_ textCase: Text.Case?) -> some View {
-        originalText.textCase(textCase)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).textCase(textCase)
+        }
     }
     
     func kerning(_ kerning: CGFloat) -> some View {
-        originalText.kerning(kerning)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).kerning(kerning)
+        }
     }
     
     func tracking(_ tracking: CGFloat) -> some View {
-        originalText.tracking(tracking)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).tracking(tracking)
+        }
     }
     
     func baselineOffset(_ baselineOffset: CGFloat) -> some View {
-        originalText.baselineOffset(baselineOffset)
+        LocalizedTextModified(originalContent: originalContent) { content in
+            Text(content).baselineOffset(baselineOffset)
+        }
+    }
+}
+
+// MARK: - Helper for Modified Text
+private struct LocalizedTextModified<Content: View>: View {
+    let originalContent: String
+    let modifier: (String) -> Content
+    @ObservedObject private var languageSettings = LanguageSettings.shared
+    
+    private var localizedContent: String {
+        switch languageSettings.preferredLanguage {
+        case .traditionalChinese:
+            return originalContent.toTraditionalChinese()
+        case .simplifiedChinese:
+            return originalContent.toSimplifiedChinese()
+        }
+    }
+    
+    var body: some View {
+        modifier(localizedContent)
     }
 }

@@ -17,7 +17,8 @@ class AppState: ObservableObject {
 struct IdiomQuestApp: App {
     let coreDataManager = CoreDataManager.shared
     @StateObject private var appState = AppState()
-    @State private var selectedTab = 0 // Game tab (0: Learning, 1: Game, 2: Review)
+    @StateObject private var languageSettings = LanguageSettings.shared
+    @State private var selectedTab = 0 // Tabs: 0: Learning, 1: Game, 2: Review, 3: Settings
     
     init() {
         coreDataManager.initializeUserData()
@@ -43,8 +44,15 @@ struct IdiomQuestApp: App {
                         Label("Review", systemImage: "checkmark.circle")
                     }
                     .tag(2)
+                
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gear")
+                    }
+                    .tag(3)
             }
             .environmentObject(appState)
+            .environmentObject(languageSettings)
             .onChange(of: selectedTab) { newTab in
                 // Pause game when switching away from game tab
                 if appState.isGameInProgress && newTab != 1 {

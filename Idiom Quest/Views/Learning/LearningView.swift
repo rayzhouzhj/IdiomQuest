@@ -28,6 +28,7 @@ struct LearningView: View {
     @State private var showConfetti = false
     @State private var showDetailedReview = false
     @State private var selectedReviewWord: NSManagedObject?
+    @State private var showSettings = false
     
     var body: some View {
         NavigationView {
@@ -60,7 +61,6 @@ struct LearningView: View {
             .onAppear {
                 loadDailyIdiom()
                 loadReviewWords()
-                debugUserData() // Add debugging
                 withAnimation(.easeInOut(duration: 0.8)) {
                     animateCard = true
                 }
@@ -73,7 +73,7 @@ struct LearningView: View {
                 loadReviewWords()
             }
             .sheet(isPresented: $showReview) {
-                ReviewView()
+                ReviewView(fromSheetPopup: true)
             }
             .sheet(isPresented: $showSearch) {
                 SearchView()
@@ -601,30 +601,6 @@ struct LearningView: View {
             print("Failed to get learned status for word '\(word)': \(error)")
         }
         return false
-    }
-    
-    private func debugUserData() {
-        let context = CoreDataManager.shared.context
-        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
-        
-        do {
-            let allUserData = try context.fetch(userDataRequest)
-            print("=== DEBUG: Total UserData entries: \(allUserData.count) ===")
-            
-            for userData in allUserData {
-                let word = userData.value(forKey: "word") as? String ?? "Unknown"
-                let learned = userData.value(forKey: "isLearned") as? Bool ?? false
-            }
-            
-            // Check if any entries are marked as learned
-            let learnedRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
-            learnedRequest.predicate = NSPredicate(format: "isLearned == %@", NSNumber(value: true))
-            let learnedEntries = try context.fetch(learnedRequest)
-            print("=== Learned entries count: \(learnedEntries.count) ===")
-            
-        } catch {
-            print("Failed to debug UserData: \(error)")
-        }
     }
     
     private func markWordAsReviewed(_ word: NSManagedObject) {
