@@ -47,8 +47,8 @@ struct SettingsView: View {
                     floatingParticles
                 }
             )
-            .navigationBarTitleDisplayMode(.inline)
         }
+        .navigationViewStyle(.stack)
         .onAppear {
             withAnimation {
                 animateGradient = true

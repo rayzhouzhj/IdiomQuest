@@ -106,6 +106,7 @@ struct ReviewView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
         .overlay(
             showConfetti ? ConfettiView(sourcePosition: nil) : nil
         )
