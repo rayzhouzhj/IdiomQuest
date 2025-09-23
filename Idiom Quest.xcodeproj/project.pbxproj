@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		94F660B82E8236E5009CCAE2 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 94F660B72E8236E5009CCAE2 /* FirebaseAnalytics */; };
+		94F6612E2E82B684009CCAE2 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 94F6612D2E82B684009CCAE2 /* FirebaseCore */; };
+		94F661302E82B684009CCAE2 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 94F6612F2E82B684009CCAE2 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +58,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94F661302E82B684009CCAE2 /* FirebaseCrashlytics in Frameworks */,
+				94F6612E2E82B684009CCAE2 /* FirebaseCore in Frameworks */,
 				94F660B82E8236E5009CCAE2 /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -107,6 +111,7 @@
 				946C14F72E7314A900C51BAA /* Sources */,
 				946C14F82E7314A900C51BAA /* Frameworks */,
 				946C14F92E7314A900C51BAA /* Resources */,
+				94F6612C2E82AE46009CCAE2 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -118,6 +123,8 @@
 			name = "Idiom Quest";
 			packageProductDependencies = (
 				94F660B72E8236E5009CCAE2 /* FirebaseAnalytics */,
+				94F6612D2E82B684009CCAE2 /* FirebaseCore */,
+				94F6612F2E82B684009CCAE2 /* FirebaseCrashlytics */,
 			);
 			productName = "Idiom Quest";
 			productReference = 946C14FB2E7314A900C51BAA /* Idiom Quest.app */;
@@ -240,6 +247,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		94F6612C2E82AE46009CCAE2 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		946C14F72E7314A900C51BAA /* Sources */ = {
@@ -407,6 +439,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"Idiom Quest/Preview Content\"";
 				DEVELOPMENT_TEAM = 8S7DRG4SSH;
 				ENABLE_PREVIEWS = YES;
@@ -593,6 +626,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 94F660B62E8236E5009CCAE2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAnalytics;
+		};
+		94F6612D2E82B684009CCAE2 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseCore;
+		};
+		94F6612F2E82B684009CCAE2 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
