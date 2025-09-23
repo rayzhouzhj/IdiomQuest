@@ -10,7 +10,7 @@ import Foundation
 struct AppConstants {
     // App Information
     static let appVersion = "1.0.0"
-    static let idiomCount = "30,895"
+    static let idiomCount = "30,000+"
     
     // UserDefaults Keys
     struct UserDefaults {
