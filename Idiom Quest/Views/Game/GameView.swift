@@ -31,7 +31,7 @@ struct GameView: View {
     @State private var totalRounds = 0
     
     // Game Duration Options
-    @State private var selectedDuration = 60  // Default 1 minute
+    @State private var selectedDuration = 180  // Default 3 minutes
     let durationOptions = [
         (60, "1 分鐘"),
         (180, "3 分鐘"), 
