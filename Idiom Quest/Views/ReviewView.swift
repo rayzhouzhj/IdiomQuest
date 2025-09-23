@@ -311,7 +311,6 @@ struct ReviewView: View {
                     ZStack {
                         LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                             .font(.body)
-                            .lineLimit(3)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .blur(radius: 8)
                         
@@ -343,14 +342,12 @@ struct ReviewView: View {
                     // Explanation
                     LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                         .font(.body)
-                        .lineLimit(3)
                     
                     // Additional info
                     if let example = idiom.value(forKey: "example") as? String, !example.isEmpty, example.trimmingCharacters(in: .whitespaces) != "无" {
                         Label {
                             LocalizedText(example.replacingOccurrences(of: "～", with: word))
                                 .font(.caption)
-                                .lineLimit(2)
                         } icon: {
                             Image(systemName: "quote.bubble.fill")
                                 .foregroundColor(.blue)

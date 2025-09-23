@@ -138,7 +138,7 @@ struct SearchView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
             
-            TextField("搜尋成語、拼音或解釋...", text: $searchText)
+            TextField("搜尋成語或解釋...", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isSearchFieldFocused)
                 .onSubmit {
@@ -321,11 +321,13 @@ struct SearchView: View {
     }
     
     private func searchResultCard(idiom: NSManagedObject) -> some View {
-        VStack(alignment: .leading, spacing: 15) {
+        let word = idiom.value(forKey: "word") as? String ?? ""
+        
+        return VStack(alignment: .leading, spacing: 15) {
             // Header with word and learn button
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    LocalizedText((idiom.value(forKey: "word") as? String ?? ""))
+                    LocalizedText(word)
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(
@@ -350,15 +352,13 @@ struct SearchView: View {
             // Explanation
             LocalizedText((idiom.value(forKey: "explanation") as? String ?? ""))
                 .font(.body)
-                .lineLimit(4)
             
             // Additional content
             VStack(alignment: .leading, spacing: 8) {
-                if let example = idiom.value(forKey: "example") as? String, !example.isEmpty {
+                if let example = idiom.value(forKey: "example") as? String, !example.isEmpty, example.trimmingCharacters(in: .whitespaces) != "无" {
                     Label {
-                        LocalizedText(example)
+                        LocalizedText(example.replacingOccurrences(of: "～", with: word))
                             .font(.caption)
-                            .lineLimit(2)
                     } icon: {
                         Image(systemName: "quote.bubble.fill")
                             .foregroundColor(.green)
@@ -370,7 +370,6 @@ struct SearchView: View {
                     Label {
                         LocalizedText(derivation)
                             .font(.caption)
-                            .lineLimit(2)
                     } icon: {
                         Image(systemName: "book.closed.fill")
                             .foregroundColor(.orange)
@@ -496,6 +495,7 @@ struct SearchView: View {
     private func performSearch() {
         guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
+        let searchTextInSimplifiedChinese = searchText.trimmingCharacters(in: .whitespacesAndNewlines).toSimplifiedChinese()
         isSearching = true
         selectedTab = .results
         
@@ -504,14 +504,13 @@ struct SearchView: View {
             let request = NSFetchRequest<NSManagedObject>(entityName: "Chengyu")
             
             // Create compound predicate for searching multiple fields
-            let wordPredicate = NSPredicate(format: "word CONTAINS[cd] %@", searchText)
-            let pinyinPredicate = NSPredicate(format: "pinyin CONTAINS[cd] %@", searchText)
-            let explanationPredicate = NSPredicate(format: "explanation CONTAINS[cd] %@", searchText)
-            let derivationPredicate = NSPredicate(format: "derivation CONTAINS[cd] %@", searchText)
-            let examplePredicate = NSPredicate(format: "example CONTAINS[cd] %@", searchText)
+            let wordPredicate = NSPredicate(format: "word CONTAINS[cd] %@", searchTextInSimplifiedChinese)
+            let explanationPredicate = NSPredicate(format: "explanation CONTAINS[cd] %@", searchTextInSimplifiedChinese)
+            let derivationPredicate = NSPredicate(format: "derivation CONTAINS[cd] %@", searchTextInSimplifiedChinese)
+            let examplePredicate = NSPredicate(format: "example CONTAINS[cd] %@", searchTextInSimplifiedChinese)
             
             request.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: [
-                wordPredicate, pinyinPredicate, explanationPredicate, derivationPredicate, examplePredicate
+                wordPredicate, explanationPredicate, derivationPredicate, examplePredicate
             ])
             
             request.fetchLimit = 50 // Limit results to prevent performance issues
