@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		94F660B82E8236E5009CCAE2 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 94F660B72E8236E5009CCAE2 /* FirebaseAnalytics */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		946C15112E7314AB00C51BAA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94F660B82E8236E5009CCAE2 /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = "Idiom Quest";
 			packageProductDependencies = (
+				94F660B72E8236E5009CCAE2 /* FirebaseAnalytics */,
 			);
 			productName = "Idiom Quest";
 			productReference = 946C14FB2E7314A900C51BAA /* Idiom Quest.app */;
@@ -196,6 +202,9 @@
 			);
 			mainGroup = 946C14F22E7314A900C51BAA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				94F660B62E8236E5009CCAE2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 946C14FC2E7314A900C51BAA /* Products */;
 			projectDirPath = "";
@@ -415,7 +424,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.rayzhou.Idiom-Quest";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.rayzhou.Idiom-Quest.dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -567,6 +576,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		94F660B62E8236E5009CCAE2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		94F660B72E8236E5009CCAE2 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 94F660B62E8236E5009CCAE2 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 946C14F32E7314A900C51BAA /* Project object */;
 }
