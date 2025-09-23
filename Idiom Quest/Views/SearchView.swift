@@ -388,32 +388,8 @@ struct SearchView: View {
     
     private func learnButton(for idiom: NSManagedObject) -> some View {
         let word = idiom.value(forKey: "word") as? String ?? ""
-        let isLearned = getLearnedStatus(for: word)
         
-        return Button(action: {
-            toggleLearned(for: idiom)
-        }) {
-            HStack(spacing: 6) {
-                Image(systemName: isLearned ? "checkmark.circle.fill" : "plus.circle.fill")
-                    .font(.subheadline)
-                
-                LocalizedText(isLearned ? "已學會" : "學習")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: isLearned ? [.green, .mint] : [.blue, .cyan]),
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .foregroundColor(.white)
-            .cornerRadius(15)
-        }
-        .buttonStyle(PlainButtonStyle())
+        return LearnButtonView(word: word, idiom: idiom)
     }
     
     private func searchHistoryCard(historyItem: SearchHistoryItem) -> some View {
@@ -682,56 +658,6 @@ struct SearchView: View {
         }
         return false
     }
-    
-    private func toggleLearned(for idiom: NSManagedObject) {
-        guard let word = idiom.value(forKey: "word") as? String else { return }
-        
-        let context = CoreDataManager.shared.context
-        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
-        userDataRequest.predicate = NSPredicate(format: "word == %@", word)
-        
-        do {
-            let now = Date()
-            let isCurrentlyLearned = getLearnedStatus(for: word)
-            
-            if let userData = try context.fetch(userDataRequest).first {
-                userData.setValue(!isCurrentlyLearned, forKey: "isLearned")
-                
-                if !isCurrentlyLearned {
-                    // First time learning - set initial review date
-                    userData.setValue(now, forKey: "lastReviewDate")
-                    let reviewCount = userData.value(forKey: "reviewCount") as? Int32 ?? 0
-                    let nextReviewInterval = getReviewInterval(for: Int(reviewCount))
-                    userData.setValue(now.addingTimeInterval(nextReviewInterval), forKey: "nextReviewDate")
-                    userData.setValue(reviewCount + 1, forKey: "reviewCount")
-                } else {
-                    // Unlearning - reset review data
-                    userData.setValue(nil, forKey: "lastReviewDate")
-                    userData.setValue(nil, forKey: "nextReviewDate")
-                    userData.setValue(0, forKey: "reviewCount")
-                }
-            } else {
-                // Create new UserData entry
-                let userData = NSEntityDescription.insertNewObject(forEntityName: "UserData", into: context)
-                userData.setValue(word, forKey: "word")
-                userData.setValue(true, forKey: "isLearned")
-                userData.setValue(now, forKey: "lastReviewDate")
-                userData.setValue(now.addingTimeInterval(getReviewInterval(for: 0)), forKey: "nextReviewDate")
-                userData.setValue(1, forKey: "reviewCount")
-            }
-            
-            CoreDataManager.shared.saveContext()
-        } catch {
-            print("Failed to toggle learned: \(error)")
-        }
-    }
-    
-    private func getReviewInterval(for reviewCount: Int) -> TimeInterval {
-        // Spaced repetition intervals (in days)
-        let intervals: [TimeInterval] = [1, 3, 7, 14, 30, 90] // days
-        let dayIndex = min(reviewCount, intervals.count - 1)
-        return intervals[dayIndex] * 24 * 60 * 60 // convert to seconds
-    }
 }
 
 // MARK: - SearchHistoryItem Equatable & Hashable
@@ -745,5 +671,114 @@ extension SearchView.SearchHistoryItem: Equatable, Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(searchQuery)
         hasher.combine(Int(searchDate.timeIntervalSince1970))
+    }
+}
+
+// MARK: - LearnButtonView
+
+struct LearnButtonView: View {
+    let word: String
+    let idiom: NSManagedObject
+    @State private var isLearned: Bool = false
+    
+    var body: some View {
+        Button(action: {
+            toggleLearned()
+        }) {
+            HStack(spacing: 6) {
+                Image(systemName: isLearned ? "checkmark.circle.fill" : "plus.circle.fill")
+                    .font(.subheadline)
+                
+                LocalizedText(isLearned ? "已學會" : "學習")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: isLearned ? [.green, .mint] : [.blue, .cyan]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .foregroundColor(.white)
+            .cornerRadius(15)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            isLearned = getLearnedStatus(for: word)
+        }
+    }
+    
+    private func toggleLearned() {
+        let context = CoreDataManager.shared.context
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        userDataRequest.predicate = NSPredicate(format: "word == %@", word)
+        
+        do {
+            let now = Date()
+            
+            if let userData = try context.fetch(userDataRequest).first {
+                let wasLearned = userData.value(forKey: "isLearned") as? Bool ?? false
+                userData.setValue(!wasLearned, forKey: "isLearned")
+                isLearned = !wasLearned  // Update local state immediately
+                print("Toggling learned status for '\(word)': \(wasLearned) -> \(!wasLearned)")
+                
+                if !wasLearned {
+                    // First time learning - set initial review date
+                    userData.setValue(now, forKey: "lastReviewDate")
+                    let reviewCount = userData.value(forKey: "reviewCount") as? Int32 ?? 0
+                    let nextReviewInterval = getReviewInterval(for: Int(reviewCount))
+                    userData.setValue(now.addingTimeInterval(nextReviewInterval), forKey: "nextReviewDate")
+                    userData.setValue(reviewCount + 1, forKey: "reviewCount")
+                    print("Set initial review data for '\(word)'")
+                } else {
+                    // Unlearning - reset review data
+                    userData.setValue(nil, forKey: "lastReviewDate")
+                    userData.setValue(nil, forKey: "nextReviewDate")
+                    userData.setValue(0, forKey: "reviewCount")
+                    print("Reset review data for '\(word)'")
+                }
+            } else {
+                // Create new UserData entry
+                let userData = NSEntityDescription.insertNewObject(forEntityName: "UserData", into: context)
+                userData.setValue(word, forKey: "word")
+                userData.setValue(true, forKey: "isLearned")
+                userData.setValue(now, forKey: "lastReviewDate")
+                userData.setValue(now.addingTimeInterval(getReviewInterval(for: 0)), forKey: "nextReviewDate")
+                userData.setValue(1, forKey: "reviewCount")
+                isLearned = true  // Update local state immediately
+                print("Created new UserData entry for '\(word)' with learned=true")
+            }
+            
+            CoreDataManager.shared.saveContext()
+            print("Core Data context saved for word: '\(word)'")
+            
+        } catch {
+            print("Failed to toggle learned: \(error)")
+        }
+    }
+    
+    private func getLearnedStatus(for word: String) -> Bool {
+        let context = CoreDataManager.shared.context
+        let userDataRequest = NSFetchRequest<NSManagedObject>(entityName: "UserData")
+        userDataRequest.predicate = NSPredicate(format: "word == %@", word)
+        
+        do {
+            if let userData = try context.fetch(userDataRequest).first {
+                return userData.value(forKey: "isLearned") as? Bool ?? false
+            }
+        } catch {
+            print("Failed to get learned status: \(error)")
+        }
+        return false
+    }
+    
+    private func getReviewInterval(for reviewCount: Int) -> TimeInterval {
+        // Spaced repetition intervals (in days)
+        let intervals: [TimeInterval] = [1, 3, 7, 14, 30, 90] // days
+        let dayIndex = min(reviewCount, intervals.count - 1)
+        return intervals[dayIndex] * 24 * 60 * 60 // convert to seconds
     }
 }
